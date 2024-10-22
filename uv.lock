@@ -20,6 +20,58 @@ wheels = [
 ]
 
 [[package]]
+name = "intel-openmp"
+version = "2024.2.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/a6/92e7356c981fcfefa4fbd132791d28656ec02ff62124d283b10219999d5d/intel_openmp-2024.2.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:ba6de86c394331719c795e743bcff3bbc10c3a16a0d3622d90819593de4c7e34", size = 3848711 },
+    { url = "https://files.pythonhosted.org/packages/78/2d/64570ae938a8ee2337ed8ba28ae1d85d3555ee6e5faadabea9e8b43a900d/intel_openmp-2024.2.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:21892ea07a9c6e164707d2b44e6f396f9f2ab6cc7e108755011fad59b596182a", size = 29565156 },
+    { url = "https://files.pythonhosted.org/packages/c6/02/e5c7e10a4bedeec4eb0f61fa8fe951e2febf6ba9ae08f806ada5f2f35ada/intel_openmp-2024.2.1-py2.py3-none-win32.whl", hash = "sha256:3dbed102d8a79f091fc3364ff4b6268e1b2904d80a58926987fc6006171c18cd", size = 928744 },
+    { url = "https://files.pythonhosted.org/packages/c8/6c/9334569937fd3c6ec93f9fe3da268db38f5113673d568854fa18a20f36ec/intel_openmp-2024.2.1-py2.py3-none-win_amd64.whl", hash = "sha256:b1fb47eefc6cbc2358216684dd87bd2315464e6d29ac84f9313819fe1528d969", size = 3602212 },
+]
+
+[[package]]
+name = "mkl"
+version = "2024.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-openmp" },
+    { name = "tbb" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/a3/eca31ce232dfa6605279dc168a911615a560b169b519bbb4a90d172e84ad/mkl-2024.2.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:747fffa9b4e95a95eef3153592783f80f27720240aa1f722826d2cba7347fab8", size = 110012115 },
+    { url = "https://files.pythonhosted.org/packages/b8/78/8e11186efdf608fee944196abd078bedd89db9460ec3370c9b260db3a231/mkl-2024.2.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:915e81274ac20964e60156ed940e0eeb29dab0c282b915ad2e231db0021b980d", size = 195506888 },
+    { url = "https://files.pythonhosted.org/packages/e5/ca/76021feedd622eb2fb8f9e3349e4e1132c01556f06679dc2499b8853956e/mkl-2024.2.2-py2.py3-none-win32.whl", hash = "sha256:fed046122c87b41f16bfe59606e0c1aacefa5bf52e03746abd2c0075d28f5beb", size = 86107078 },
+    { url = "https://files.pythonhosted.org/packages/10/00/49b12dfda989a03e0139d1ce630bd8c388bb708db42e1cfe86c5db66e745/mkl-2024.2.2-py2.py3-none-win_amd64.whl", hash = "sha256:63a286f8a39bfa3bf8846be304a39fbe6a58615755888d54e18b63fa37ca1d04", size = 161672182 },
+]
+
+[[package]]
+name = "mkl-devel"
+version = "2024.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mkl" },
+    { name = "mkl-include" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/04/9f90f16ebccc1c0db104ee5d310bfbbe392e264e2d6d90b2b5ad651cdf94/mkl_devel-2024.2.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:d8612ed2c26a74f505ad6abfe1074838370bf69b678476ad3982ff81bcfc46c9", size = 31800 },
+    { url = "https://files.pythonhosted.org/packages/ce/c5/11a375ee99ceae06a74c77cc5cc465036ea85a26db0c2dbcec3a44bd527a/mkl_devel-2024.2.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:d1cadb0cdfb839b17002a4245e8a29d6857a962bd2587ce670973bb83ed11b0f", size = 31797 },
+    { url = "https://files.pythonhosted.org/packages/15/da/23bdabf1eb5235f456ff2af5274f2ed099fc28927cf859805d95e2ca2458/mkl_devel-2024.2.2-py2.py3-none-win32.whl", hash = "sha256:c2ddfcbaf62b4830e7eff4abfa51aa21fa3a05c1653ac18469ca509f9d78a2df", size = 4261767 },
+    { url = "https://files.pythonhosted.org/packages/3b/ac/b6ef92de949f074935c0a8d3b1cfe8a0d113368de39a8c072a7fd77ba335/mkl_devel-2024.2.2-py2.py3-none-win_amd64.whl", hash = "sha256:a6faa9237141bb0c118f4dd43c42c74100994bad4a0d8dbceb8f86b122f43a4e", size = 13857297 },
+]
+
+[[package]]
+name = "mkl-include"
+version = "2024.2.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/90/5c4d3907a3bae2ed91cbf55e2eac047ac8ed36bd935267b236663c6d794c/mkl_include-2024.2.2-py2.py3-none-manylinux1_i686.whl", hash = "sha256:918662b45b1e79d635ed99e66f8f15fa101034d2faa6557ce3b85c11774b914e", size = 1150584 },
+    { url = "https://files.pythonhosted.org/packages/a0/c8/490f8712ccc5b216ea83706436c076f9ad0ffb7bbf21dcbdb710791ce368/mkl_include-2024.2.2-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:124298b6806bc57ad3998c521699fb410a29812b35dc0e383fe8a4745cc29f11", size = 1319215 },
+    { url = "https://files.pythonhosted.org/packages/a4/e6/85f7d42f1a62f063ac4f4e8cb140893d2099242eb3ddea499eda22d31b91/mkl_include-2024.2.2-py2.py3-none-win32.whl", hash = "sha256:d54dd3e78305d5272354e6fc4d34b19f6fae0fccebc69dfafb7831179464df2a", size = 1157421 },
+    { url = "https://files.pythonhosted.org/packages/75/67/d5ed174eba3ebb75e4d0a71ca1d6c225d22b9c50897c1f0f981108bc4681/mkl_include-2024.2.2-py2.py3-none-win_amd64.whl", hash = "sha256:e52b9716cd876d49d38ae76e234eed0982d1b7dfeca10d21089003a8678e0fab", size = 1326252 },
+]
+
+[[package]]
 name = "numpy"
 version = "2.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -222,6 +274,7 @@ name = "sprog"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "mkl-devel" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "scipy" },
@@ -236,6 +289,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "mkl-devel", specifier = ">=2024.2.2" },
     { name = "numpy", specifier = ">=2.1.2" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "scipy", specifier = ">=1.14.1" },
@@ -246,6 +300,17 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "ruff", specifier = ">=0.7.0" },
+]
+
+[[package]]
+name = "tbb"
+version = "2021.13.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/62/52e55f0045efa6b10a69edb306c9bfdf4ec7d59cf88906f4fd104482fbfa/tbb-2021.13.1-py2.py3-none-manylinux1_i686.whl", hash = "sha256:bb5bdea0c0e9e6ad0739e7a8796c2635ce9eccca86dd48c426cd8027ac70fb1d", size = 5205093 },
+    { url = "https://files.pythonhosted.org/packages/cc/67/b4dc53ce8de52cc9c3d75ffd93477b802659db093f97c8b6d63c917e5616/tbb-2021.13.1-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:d916359dc685579d09e4b344241550afc1cc034f7f5ec7234c258b6680912d70", size = 5386608 },
+    { url = "https://files.pythonhosted.org/packages/fb/8a/5062b00c378c051e26507e5eca8d3b5c91ed63f8a2139f6f0f422be84b02/tbb-2021.13.1-py3-none-win32.whl", hash = "sha256:00f5e5a70051650ddd0ab6247c0549521968339ec21002e475cd23b1cbf46d66", size = 248994 },
+    { url = "https://files.pythonhosted.org/packages/9b/24/84ce997e8ae6296168a74d0d9c4dde572d90fb23fd7c0b219c30ff71e00e/tbb-2021.13.1-py3-none-win_amd64.whl", hash = "sha256:cbf024b2463fdab3ebe3fa6ff453026358e6b903839c80d647e08ad6d0796ee9", size = 286908 },
 ]
 
 [[package]]

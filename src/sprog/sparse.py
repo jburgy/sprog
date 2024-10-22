@@ -1,3 +1,7 @@
+"""Utilities to implement pandas API with Yale sparse matrices."""
+
+# ruff: noqa: S101
+
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
@@ -49,7 +53,7 @@ def gather(indices: npt.ArrayLike, n: int = -1) -> sparse.csr_array:
     )
 
 
-def sumby(by: npt.ArrayLike):
+def sumby(by: npt.ArrayLike) -> sparse.csr_array:
     """Compute partial sums defined by unique tuples.
 
     Roughly equivalent to::
@@ -66,9 +70,3 @@ def sumby(by: npt.ArrayLike):
         (np.ones(shape=len(by)), (inverse, range(len(by)))),
         shape=(len(keys), len(by)),
     )
-
-
-def linear_interpolate(
-    x: npt.NDArray[np.floating], y: npt.NDArray[np.floating],
-) -> sparse.csr_array:
-    return NotImplemented

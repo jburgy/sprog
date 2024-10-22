@@ -1,3 +1,7 @@
+"""See https://docs.mosek.com/latest/pythonfusion/examples-list.html#doc-example-file-baker-py."""  # noqa: E501
+
+# ruff: noqa: S101
+
 import numpy as np
 import pandas as pd
 from scipy import optimize, sparse
@@ -5,7 +9,11 @@ from scipy import optimize, sparse
 from sprog.extension import LinearVariableArray
 
 
-def test_baker():
+def test_baker() -> None:
+    """Demonstrates a small linear problem.
+
+    Source: "Lineær Algebra" by Knut Sydsaeter and Bernt Oeksendal.
+    """
     ingredients = pd.DataFrame(
         {
             "cake": [3.0, 1.0, 1.2],
