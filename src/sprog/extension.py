@@ -9,7 +9,6 @@ import numpy.typing as npt
 import pandas as pd
 from pandas._typing import (
     Dtype,
-    InterpolateOptions,
     PositionalIndexer,
     TakeIndexer,
 )
@@ -95,18 +94,3 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def _concat_same_type(cls, to_concat: Sequence[Self]) -> Self:
         """Concatenate multiple array of this dtype."""
         return cls(sparse.vstack(to_concat, format="csr"))
-
-    def interpolate(
-        self,
-        *,
-        method: InterpolateOptions,  # noqa: ARG002
-        axis: int,  # noqa: ARG002
-        index: pd.Index,  # noqa: ARG002
-        limit,  # noqa: ANN001, ARG002
-        limit_direction,  # noqa: ANN001, ARG002
-        limit_area,  # noqa: ANN001, ARG002
-        copy: bool,  # noqa: ARG002
-        **kwargs,  # noqa: ANN003, ARG002
-    ) -> Self:
-        """See DataFrame.interpolate.__doc__."""
-        return self
