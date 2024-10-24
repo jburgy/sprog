@@ -40,6 +40,7 @@ class LinearVariable(ExtensionDtype):
 
     type = sparse.sparray
     name = "unknown"
+    _supports_2d = False
 
     @classmethod
     def construct_array_type(cls) -> "type[ExtensionArray]":
@@ -67,6 +68,11 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     ) -> Self:
         return original.take(values)
 
+    def __len__(self):
+        return self.shape[0]
+
+    ndim = 1
+
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
         return type(self)(dot_product_mkl(lhs, self))
@@ -75,9 +81,10 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key) else key)
 
+    @property
     def dtype(self) -> ExtensionDtype:
         """Return an instance of ExtensionDtype."""
-        return LinearVariable
+        return LinearVariable()
 
     def take(
         self,

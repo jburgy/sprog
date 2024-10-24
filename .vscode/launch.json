@@ -15,7 +15,7 @@
                 "MKL_RT": ".venv/lib/libmkl_rt.so.2",
                 "KMP_AFFINITY": "disabled",
             },
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }
