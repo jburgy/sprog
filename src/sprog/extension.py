@@ -1,5 +1,6 @@
 """See https://pandas.pydata.org/docs/development/extending.html#extension-types."""  # noqa: E501
 
+import inspect
 import os
 from collections.abc import Sequence
 from typing import Any, Self
@@ -32,13 +33,13 @@ from sprog.sparse import gather, scatter  # noqa: E402
 
 
 @register_extension_dtype
-class LinearVariable(ExtensionDtype):
+class LinearVariable(np.float64, ExtensionDtype):
     """See extension types on "Extending pandas".
 
     https://pandas.pydata.org/docs/development/extending.html#extension-types.
     """
 
-    type = sparse.sparray
+    type = float
     name = "unknown"
     _supports_2d = False
 
@@ -68,10 +69,16 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     ) -> Self:
         return original.take(values)
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Avoid "sparse array length is ambiguous; use getnnz()"."""
         return self.shape[0]
 
-    ndim = 1
+    @property
+    def ndim(self) -> int:
+        """Trick pandas into thinking we're one dimensional."""
+        if "pandas" in inspect.currentframe().f_back.f_code.co_filename:
+            return 1
+        return super().ndim
 
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
@@ -79,11 +86,17 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
 
     def __getitem__(self, key: PositionalIndexer) -> Self:
         """Object indexing using the `[]` operator."""
-        return self.take([key] if is_scalar_indexer(key) else key)
+        return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
+
+    def __eq__(self, other: Self) -> Self:
+        """Check object equality."""
+        return NotImplemented
 
     @property
     def dtype(self) -> ExtensionDtype:
         """Return an instance of ExtensionDtype."""
+        if "sparse_dot_mkl" in inspect.currentframe().f_back.f_code.co_filename:
+            return np.float64
         return LinearVariable()
 
     def take(

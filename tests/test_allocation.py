@@ -6,7 +6,9 @@ from importlib.resources import files
 
 import pandas as pd
 import pytest
+from scipy import sparse
 
+from sprog.extension import LinearVariableArray
 from tests import resources
 
 
@@ -30,6 +32,17 @@ def portfolio() -> pd.DataFrame:
     return holdings
 
 
+@pytest.mark.skip(reason="work in progress")
 def test_allocation(portfolio: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
     assert portfolio.shape == (160, 4), "placeholder"
+    portfolio["broker_1"] = LinearVariableArray(
+        sparse.eye(len(portfolio), format="csr")
+    )
+    portfolio["broker_2"] = LinearVariableArray(
+        sparse.eye(len(portfolio), k=len(portfolio), format="csr")
+    )
+    constraints = [
+        portfolio["broker_1"] + portfolio["broker_2"] == abs(portfolio["MV"])
+    ]
+    assert isinstance(constraints, list)

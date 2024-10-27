@@ -19,10 +19,18 @@ def test_construct() -> None:
     s = pd.Series(obj, index=[*"ABC"])
     assert isinstance(s.dtype, LinearVariable)
 
-    df = pd.DataFrame({"data": obj}, index=[*"ABC"])
-    assert isinstance(df.dtypes["data"], LinearVariable)
-    assert df.shape == (3, 1)
+    frame = pd.DataFrame({"data": obj}, index=[*"ABC"])
+    assert isinstance(frame.dtypes["data"], LinearVariable)
+    assert frame.shape == (3, 1)
+
+
+def test_take() -> None:
+    """Test indexing and selecting data."""
+    obj = LinearVariableArray(sparse.eye(3, format="csr"))
+    ser = pd.Series(obj, index=[*"ABC"])
+    loc = ser.loc[["A", "C"]]
+    assert isinstance(loc, pd.Series)
 
 
 if __name__ == "__main__":
-    test_construct()
+    test_take()
