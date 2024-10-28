@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from scipy import sparse
 
-from sprog.extension import LinearVariableArray
+from sprog.extension import LinearConstraintArray, LinearVariableArray
 from tests import resources
 
 
@@ -32,7 +32,6 @@ def portfolio() -> pd.DataFrame:
     return holdings
 
 
-@pytest.mark.skip(reason="work in progress")
 def test_allocation(portfolio: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
     assert portfolio.shape == (160, 4), "placeholder"
@@ -45,4 +44,8 @@ def test_allocation(portfolio: pd.DataFrame) -> None:
     constraints = [
         portfolio["broker_1"] + portfolio["broker_2"] == abs(portfolio["MV"])
     ]
-    assert isinstance(constraints, list)
+    assert all(
+        isinstance(constraint, pd.Series)
+        and isinstance(constraint.array, LinearConstraintArray)
+        for constraint in constraints
+    )

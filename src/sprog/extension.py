@@ -1,14 +1,16 @@
 """See https://pandas.pydata.org/docs/development/extending.html#extension-types."""  # noqa: E501
 
 import inspect
+import operator
 import os
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any, Self
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pandas._typing import (
+    ArrayLike,
     Dtype,
     PositionalIndexer,
     TakeIndexer,
@@ -19,6 +21,7 @@ from pandas.core.dtypes.dtypes import (
     register_extension_dtype,
 )
 from pandas.core.indexers import is_scalar_indexer
+from pandas.core.ops import unpack_zerodim_and_defer
 from scipy import sparse
 
 os.environ["MKL_RT"] = os.path.join(  # noqa: PTH118
@@ -88,9 +91,13 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
 
-    def __eq__(self, other: Self) -> Self:
-        """Check object equality."""
-        return NotImplemented
+    @unpack_zerodim_and_defer("__eq__")
+    def __eq__(self, other: ArrayLike) -> "LinearConstraintArray":
+        """Generate equality constraint."""
+        constraint = LinearConstraintArray(self)
+        constraint.other = other
+        constraint.op = operator.eq
+        return constraint
 
     @property
     def dtype(self) -> ExtensionDtype:
@@ -106,7 +113,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         fill_value: Any = None,  # noqa: ANN401
     ) -> Self:
         """Take elements from an array."""
-        assert np.isnan(fill_value)  # noqa: S101
+        assert pd.isna(fill_value)  # noqa: S101
         n = len(self)
         return gather(np.arange(n)[indices], n=n) @ self
 
@@ -114,3 +121,10 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def _concat_same_type(cls, to_concat: Sequence[Self]) -> Self:
         """Concatenate multiple array of this dtype."""
         return cls(sparse.vstack(to_concat, format="csr"))
+
+
+class LinearConstraintArray(LinearVariableArray):
+    """And instance of ExtensionType to represent constraints."""
+
+    other: ArrayLike
+    op: Callable[[ArrayLike, ArrayLike], ArrayLike]
