@@ -1,9 +1,8 @@
 """See https://pandas.pydata.org/docs/development/extending.html#extension-types."""  # noqa: E501
 
 import inspect
-import operator
 import os
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import Any, Self
 
 import numpy as np
@@ -55,6 +54,9 @@ class LinearVariable(np.float64, ExtensionDtype):
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
     """An instance of ExtensionDtype to represent unknowns."""
 
+    lower: npt.NDArray[np.float64] | None = None
+    upper: npt.NDArray[np.float64] | None = None
+
     @classmethod
     def _from_sequence_of_strings(
         cls,
@@ -91,12 +93,26 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
 
+    @unpack_zerodim_and_defer("__le__")
+    def __le__(self, other: ArrayLike) -> Self:
+        """Generate <= constraint."""
+        constraint = LinearVariableArray(self)
+        constraint.upper = other
+        return constraint
+
+    @unpack_zerodim_and_defer("__ge__")
+    def __ge__(self, other: ArrayLike) -> Self:
+        """Generate <= constraint."""
+        constraint = LinearVariableArray(self)
+        constraint.lower = other
+        return constraint
+
     @unpack_zerodim_and_defer("__eq__")
-    def __eq__(self, other: ArrayLike) -> "LinearConstraintArray":
-        """Generate equality constraint."""
-        constraint = LinearConstraintArray(self)
-        constraint.other = other
-        constraint.op = operator.eq
+    def __eq__(self, other: ArrayLike) -> Self:
+        """Generate == constraint."""
+        constraint = LinearVariableArray(self)
+        constraint.lower = other
+        constraint.upper = other
         return constraint
 
     @property
@@ -106,10 +122,17 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
             return np.float64
         return LinearVariable()
 
+    def astype(self, dtype: Dtype, *, copy: bool = False) -> ArrayLike:
+        """Avoid unnecessary copy."""
+        if isinstance(dtype, LinearVariable) and not copy:
+            return self
+        return super().astype(dtype=dtype, copy=copy)
+
     def take(
         self,
         indices: "TakeIndexer",
-        allow_fill: bool = False,  # noqa: ARG002, FBT001, FBT002
+        *,
+        allow_fill: bool = False,  # noqa: ARG002
         fill_value: Any = None,  # noqa: ANN401
     ) -> Self:
         """Take elements from an array."""
@@ -122,9 +145,6 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Concatenate multiple array of this dtype."""
         return cls(sparse.vstack(to_concat, format="csr"))
 
-
-class LinearConstraintArray(LinearVariableArray):
-    """And instance of ExtensionType to represent constraints."""
-
-    other: ArrayLike
-    op: Callable[[ArrayLike, ArrayLike], ArrayLike]
+    def isna(self) -> npt.NDArray[np.bool_]:
+        """Implement pd.isna."""
+        return np.zeros(len(self), dtype=np.bool_)

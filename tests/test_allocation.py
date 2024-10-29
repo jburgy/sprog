@@ -1,6 +1,6 @@
 """Test margin-minimizing (leverage maximizing) portfolio allocation."""
 
-# ruff: noqa: S101
+# ruff: noqa: RUF018, S101
 
 from importlib.resources import files
 
@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from scipy import sparse
 
-from sprog.extension import LinearConstraintArray, LinearVariableArray
+from sprog.extension import LinearVariableArray
 from tests import resources
 
 
@@ -46,6 +46,7 @@ def test_allocation(portfolio: pd.DataFrame) -> None:
     ]
     assert all(
         isinstance(constraint, pd.Series)
-        and isinstance(constraint.array, LinearConstraintArray)
+        and isinstance(array := constraint.array, LinearVariableArray)
+        and (array.lower is not None or array.upper is not None)
         for constraint in constraints
     )
