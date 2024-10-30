@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from scipy import sparse
 
+from sprog import aggregate as agg
 from sprog.extension import LinearVariableArray
 from tests import resources
 
@@ -34,15 +35,24 @@ def portfolio() -> pd.DataFrame:
 
 def test_allocation(portfolio: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
-    assert portfolio.shape == (160, 4), "placeholder"
+    m = len(portfolio)
     portfolio["broker_1"] = LinearVariableArray(
-        sparse.eye(len(portfolio), format="csr")
+        sparse.eye(m, format="csr")
     )
     portfolio["broker_2"] = LinearVariableArray(
-        sparse.eye(len(portfolio), k=len(portfolio), format="csr")
+        sparse.eye(m, n=m + m, k=m, format="csr")
     )
+    sides = portfolio.groupby("Side")["broker_1"].pipe(agg.sum)
+    gmv = sides["Long"] - sides["Short"]
+    assert isinstance(gmv, LinearVariableArray)
+    assert len(gmv) == 1
+    sector_nmv = abs(portfolio.groupby("Sector")["broker_1"].pipe(agg.sum))
+    assert sector_nmv.index.equals(
+        pd.Index(portfolio["Sector"]).unique().sort_values()
+    )
+    # figure out broadcasting to compare sector_nmv and gmv
     constraints = [
-        portfolio["broker_1"] + portfolio["broker_2"] == abs(portfolio["MV"])
+        portfolio["broker_1"] + portfolio["broker_2"] == abs(portfolio["MV"]),
     ]
     assert all(
         isinstance(constraint, pd.Series)
@@ -50,3 +60,7 @@ def test_allocation(portfolio: pd.DataFrame) -> None:
         and (array.lower is not None or array.upper is not None)
         for constraint in constraints
     )
+
+
+if __name__ == "__main__":
+    pytest.main(["-v", f"{__file__}::{test_allocation.__name__}"])

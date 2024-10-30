@@ -54,8 +54,8 @@ class LinearVariable(np.float64, ExtensionDtype):
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
     """An instance of ExtensionDtype to represent unknowns."""
 
-    lower: npt.NDArray[np.float64] | None = None
-    upper: npt.NDArray[np.float64] | None = None
+    lower: ArrayLike | None = None
+    upper: ArrayLike | None = None
 
     @classmethod
     def _from_sequence_of_strings(
@@ -69,14 +69,18 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     @classmethod
     def _from_factorized(
         cls,
-        values: npt.NDArray[np.int_],
+        values: npt.NDArray[np.intp],
         original: Self,
     ) -> Self:
         return original.take(values)
 
     def __len__(self) -> int:
-        """Avoid "sparse array length is ambiguous; use getnnz()"."""
-        return self.shape[0]
+        """Avoid "sparse array length is ambiguous; use getnnz()".
+
+        CSR matrix represents a linear operator.  We care about the
+        length of its image.
+        """
+        return self.lower.size if self.lower is not None else self.shape[0]
 
     @property
     def ndim(self) -> int:
@@ -93,24 +97,34 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
 
+    @unpack_zerodim_and_defer("__add__")
+    def __add__(self, other: ArrayLike) -> Self:
+        """Implement self + other."""
+        # handle np.ndarray
+        m, n = self.shape
+        if m < (n1 := other.shape[1]):
+            pad = sparse.csr_array((m, n1 - n))
+            return type(self)(sparse.hstack([self, pad], format="csr") + other)
+        return super().__add__(other)
+
     @unpack_zerodim_and_defer("__le__")
     def __le__(self, other: ArrayLike) -> Self:
         """Generate <= constraint."""
-        constraint = LinearVariableArray(self)
+        constraint: Self = self.copy()
         constraint.upper = other
         return constraint
 
     @unpack_zerodim_and_defer("__ge__")
     def __ge__(self, other: ArrayLike) -> Self:
         """Generate <= constraint."""
-        constraint = LinearVariableArray(self)
+        constraint: Self = self.copy()
         constraint.lower = other
         return constraint
 
     @unpack_zerodim_and_defer("__eq__")
     def __eq__(self, other: ArrayLike) -> Self:
         """Generate == constraint."""
-        constraint = LinearVariableArray(self)
+        constraint: Self = self.copy()
         constraint.lower = other
         constraint.upper = other
         return constraint
@@ -148,3 +162,20 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def isna(self) -> npt.NDArray[np.bool_]:
         """Implement pd.isna."""
         return np.zeros(len(self), dtype=np.bool_)
+
+    def __abs__(self) -> Self:
+        """Epigraph for |x|.
+
+        y = abs(x)
+            ⇒ y ≥ x ∧ y ≥ -x
+            ⇒ y - x ≥ 0 ∧ y + x ≥
+        """
+        eye = sparse.eye(m=len(self), format="csr")
+        res = type(self)(
+            sparse.block_array(
+                [[-self, eye], [self, eye]],
+                format="csr",
+            )
+        )
+        res.lower = np.zeros(len(res))
+        return res
