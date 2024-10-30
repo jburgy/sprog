@@ -7,7 +7,18 @@ import numpy.typing as npt
 from scipy import sparse
 
 
-def scatter(indices: npt.ArrayLike, m: int, n: int) -> sparse.csr_array:
+def repeat(repeats: int) -> sparse.csr_array:
+    """(1 × n) → (repeats × n).
+
+    >>> repeat(3) @ [4]
+    array([4., 4., 4.])
+    """
+    return sparse.csr_array(
+        (np.ones(repeats), (range(repeats), [0] * repeats)), shape=(repeats, 1)
+    )
+
+
+def scatter(indices: npt.ArrayLike, m: int = -1, n: int = -1) -> sparse.csr_array:
     """Scatter consecutive indices of x into (larger) result vector y.
 
     Roughly equivalent to::
@@ -15,7 +26,7 @@ def scatter(indices: npt.ArrayLike, m: int, n: int) -> sparse.csr_array:
         for i, j in enumerate(indices):
             y[j] = x[i]
 
-    >>> scatter([1, 3], m=4, n=2) @ [6, 7]
+    >>> scatter([1, 3]) @ [6, 7]
     array([0., 6., 0., 7.])
     """
     if m < 0:

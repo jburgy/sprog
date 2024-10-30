@@ -31,7 +31,7 @@ os.environ["KMP_AFFINITY"] = "disabled"
 
 from sparse_dot_mkl import dot_product_mkl  # noqa: E402
 
-from sprog.sparse import gather, scatter  # noqa: E402
+from sprog.sparse import gather, repeat, scatter  # noqa: E402
 
 
 @register_extension_dtype
@@ -80,7 +80,13 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         CSR matrix represents a linear operator.  We care about the
         length of its image.
         """
-        return self.lower.size if self.lower is not None else self.shape[0]
+        return (
+            self.lower.size
+            if self.lower is not None
+            else self.upper.size
+            if self.upper is not None
+            else self.shape[0]
+        )
 
     @property
     def ndim(self) -> int:
@@ -99,32 +105,39 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
 
     @unpack_zerodim_and_defer("__add__")
     def __add__(self, other: ArrayLike) -> Self:
-        """Implement self + other."""
+        """Implement self - other."""
         # handle np.ndarray
         m, n = self.shape
-        if m < (n1 := other.shape[1]):
+        if n < (n1 := other.shape[1]):
             pad = sparse.csr_array((m, n1 - n))
             return type(self)(sparse.hstack([self, pad], format="csr") + other)
         return super().__add__(other)
 
+    @unpack_zerodim_and_defer("__sub__")
+    def __sub__(self, other: ArrayLike) -> Self:
+        """Implement self + other."""
+        m, n = self.shape
+        if sparse.issparse(other) and 1 == len(other) < m:
+            other = repeat(m) @ other
+        if (n1 := other.shape[1]) < n:
+            pad = sparse.csr_array((m, n - n1))
+            other = sparse.hstack([other, pad], format="csr")
+        res = super().__sub__(other)
+        res.lower = self.lower
+        res.upper = self.upper
+        return res
+
     @unpack_zerodim_and_defer("__le__")
     def __le__(self, other: ArrayLike) -> Self:
         """Generate <= constraint."""
-        constraint: Self = self.copy()
-        constraint.upper = other
-        return constraint
-
-    @unpack_zerodim_and_defer("__ge__")
-    def __ge__(self, other: ArrayLike) -> Self:
-        """Generate <= constraint."""
-        constraint: Self = self.copy()
-        constraint.lower = other
+        constraint: Self = self._with_data(self.data)
+        constraint.upper = np.broadcast_to(other, shape=(len(self),))
         return constraint
 
     @unpack_zerodim_and_defer("__eq__")
     def __eq__(self, other: ArrayLike) -> Self:
         """Generate == constraint."""
-        constraint: Self = self.copy()
+        constraint: Self = self._with_data(self.data)
         constraint.lower = other
         constraint.upper = other
         return constraint
@@ -177,5 +190,5 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
                 format="csr",
             )
         )
-        res.lower = np.zeros(len(res))
+        res.lower = np.zeros(len(self))
         return res

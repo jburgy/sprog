@@ -36,9 +36,7 @@ def portfolio() -> pd.DataFrame:
 def test_allocation(portfolio: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
     m = len(portfolio)
-    portfolio["broker_1"] = LinearVariableArray(
-        sparse.eye(m, format="csr")
-    )
+    portfolio["broker_1"] = LinearVariableArray(sparse.eye(m, format="csr"))
     portfolio["broker_2"] = LinearVariableArray(
         sparse.eye(m, n=m + m, k=m, format="csr")
     )
@@ -47,12 +45,10 @@ def test_allocation(portfolio: pd.DataFrame) -> None:
     assert isinstance(gmv, LinearVariableArray)
     assert len(gmv) == 1
     sector_nmv = abs(portfolio.groupby("Sector")["broker_1"].pipe(agg.sum))
-    assert sector_nmv.index.equals(
-        pd.Index(portfolio["Sector"]).unique().sort_values()
-    )
-    # figure out broadcasting to compare sector_nmv and gmv
+    assert sector_nmv.index.equals(pd.Index(portfolio["Sector"]).unique().sort_values())
     constraints = [
         portfolio["broker_1"] + portfolio["broker_2"] == abs(portfolio["MV"]),
+        sector_nmv - 0.1 * gmv <= 0.0,
     ]
     assert all(
         isinstance(constraint, pd.Series)

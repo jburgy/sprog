@@ -13,7 +13,8 @@ def sum(groups: SeriesGroupBy) -> pd.Series:  # noqa: A001
         data=groups.obj,
         values=sparse.csr_array(
             (np.ones(row.size), (row, np.arange(row.size, dtype=row.dtype)))
-        ) @ groups.obj.array,
+        )
+        @ groups.obj.array,
         not_indexed_same=True,
         is_transform=False,
     )
