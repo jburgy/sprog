@@ -1,6 +1,10 @@
 """See https://pandas.pydata.org/docs/development/extending.html#extension-types."""  # noqa: E501
 
+# flake8: noqa: E203
+# ruff: noqa: SLF001
+
 import inspect
+import numbers
 import os
 from collections.abc import Sequence
 from typing import Any, Self
@@ -33,6 +37,8 @@ from sparse_dot_mkl import dot_product_mkl  # noqa: E402
 
 from sprog.sparse import gather, repeat, scatter  # noqa: E402
 
+_offset: int = 0
+
 
 @register_extension_dtype
 class LinearVariable(np.float64, ExtensionDtype):
@@ -57,12 +63,29 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     lower: ArrayLike | None = None
     upper: ArrayLike | None = None
 
+    def __init__(
+        self,
+        arg1: Any,  # noqa: ANN401
+        *,
+        shape: tuple | None = None,
+        dtype: Dtype | None = None,
+        copy: bool = False,
+    ) -> None:
+        """Instantiate helper variables."""
+        if isinstance(arg1, numbers.Integral):
+            global _offset  # noqa: PLW0603
+            n = arg1 + _offset
+            arg1 = sparse.eye_array(m=arg1, n=n, k=_offset, format="csr")
+            _offset = n
+        super().__init__(arg1, shape=shape, dtype=dtype, copy=copy)
+
     @classmethod
     def _from_sequence_of_strings(
         cls,
         strings: Sequence[str],
+        *,
         dtype: Dtype | None = None,  # noqa: ARG003
-        copy: bool = False,  # noqa: ARG003, FBT001, FBT002
+        copy: bool = False,  # noqa: ARG003
     ) -> Self:
         return cls(scatter(pd.Series(strings).str.extract(r"^x(\d+)$")))
 
@@ -109,8 +132,14 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         # handle np.ndarray
         m, n = self.shape
         if n < (n1 := other.shape[1]):
-            pad = sparse.csr_array((m, n1 - n))
-            return type(self)(sparse.hstack([self, pad], format="csr") + other)
+            return (
+                self.__class__(
+                    (self.data, self.indices, self.indptr),
+                    shape=(m, n1),
+                    dtype=self.dtype,
+                )
+                + other
+            )
         return super().__add__(other)
 
     @unpack_zerodim_and_defer("__sub__")
@@ -119,9 +148,12 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         m, n = self.shape
         if sparse.issparse(other) and 1 == len(other) < m:
             other = repeat(m) @ other
-        if (n1 := other.shape[1]) < n:
-            pad = sparse.csr_array((m, n - n1))
-            other = sparse.hstack([other, pad], format="csr")
+        if other.shape[1] < n:
+            other = self.__class__(
+                (other.data, other.indices, other.indptr),
+                shape=(m, n),
+                dtype=other.dtype,
+            )
         res = super().__sub__(other)
         res.lower = self.lower
         res.upper = self.upper
@@ -170,11 +202,30 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     @classmethod
     def _concat_same_type(cls, to_concat: Sequence[Self]) -> Self:
         """Concatenate multiple array of this dtype."""
-        return cls(sparse.vstack(to_concat, format="csr"))
+        from scipy.sparse._sputils import get_index_dtype
 
-    def isna(self) -> npt.NDArray[np.bool_]:
-        """Implement pd.isna."""
-        return np.zeros(len(self), dtype=np.bool_)
+        data = np.concatenate([b.data for b in to_concat])
+        constant_dim = max(b._shape_as_2d[1] for b in to_concat)
+        idx_dtype = get_index_dtype(
+            arrays=[b.indptr for b in to_concat], maxval=max(data.size, constant_dim)
+        )
+        indices = np.empty(data.size, dtype=idx_dtype)
+        indptr = np.empty(
+            sum(b._shape_as_2d[0] for b in to_concat) + 1, dtype=idx_dtype
+        )
+        last_indptr = idx_dtype(0)
+        sum_dim = 0
+        sum_indices = 0
+        for b in to_concat:
+            indices[sum_indices : sum_indices + b.indices.size] = b.indices
+            sum_indices += b.indices.size
+            idxs = slice(sum_dim, sum_dim + b._shape_as_2d[0])
+            indptr[idxs] = b.indptr[:-1]
+            indptr[idxs] += last_indptr
+            sum_dim += b._shape_as_2d[0]
+            last_indptr += b.indptr[-1]
+        indptr[-1] = last_indptr
+        return cls((data, indices, indptr), shape=(sum_dim, constant_dim))
 
     def __abs__(self) -> Self:
         """Epigraph for |x|.
@@ -183,7 +234,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
             ⇒ y ≥ x ∧ y ≥ -x
             ⇒ y - x ≥ 0 ∧ y + x ≥
         """
-        eye = sparse.eye(m=len(self), format="csr")
+        eye = sparse.eye_array(m=len(self), format="csr")
         res = type(self)(
             sparse.block_array(
                 [[-self, eye], [self, eye]],
