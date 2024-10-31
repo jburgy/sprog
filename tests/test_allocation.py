@@ -6,7 +6,6 @@ from importlib.resources import files
 
 import pandas as pd
 import pytest
-from scipy import sparse
 
 from sprog import aggregate as agg
 from sprog.extension import LinearVariableArray
@@ -36,10 +35,8 @@ def portfolio() -> pd.DataFrame:
 def test_allocation(portfolio: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
     m = len(portfolio)
-    portfolio["broker_1"] = LinearVariableArray(sparse.eye(m, format="csr"))
-    portfolio["broker_2"] = LinearVariableArray(
-        sparse.eye(m, n=m + m, k=m, format="csr")
-    )
+    portfolio["broker_1"] = LinearVariableArray(m)
+    portfolio["broker_2"] = LinearVariableArray(m)
     sides = portfolio.groupby("Side")["broker_1"].pipe(agg.sum)
     gmv = sides["Long"] - sides["Short"]
     assert isinstance(gmv, LinearVariableArray)

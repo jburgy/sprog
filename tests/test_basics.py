@@ -16,6 +16,10 @@ def test_construct() -> None:
     assert lib.is_list_like(obj)
     assert extract_array(obj, extract_numpy=True, extract_range=True) is obj
 
+    a = pd.array([3, 4], dtype=LinearVariable())
+    assert all(a.indptr == [0] * 4 + [1, 2])
+    assert (a != a.astype(float)).nnz == 0
+
     s = pd.Series(obj, index=[*"ABC"])
     assert isinstance(s.dtype, LinearVariable)
 
@@ -45,5 +49,21 @@ def test_melt() -> None:
     assert (sparse.eye_array(6) != narrow["value"].array).nnz == 0
 
 
+def test_unstack() -> None:
+    """Invoke LinearVariable.construct_array_type."""
+    a = pd.Series(  # noqa: PD010
+        LinearVariableArray(sparse.eye_array(4)),
+        index=pd.MultiIndex.from_product([["one", "two"], ["a", "b"]]),
+    ).unstack(level=0)
+    b = pd.DataFrame(
+        {
+            "one": LinearVariableArray(sparse.eye_array(m=2, n=4)),
+            "two": LinearVariableArray(sparse.eye_array(m=2, n=4, k=2)),
+        },
+        index=["a", "b"],
+    )
+    pd.testing.assert_frame_equal(a, b)
+
+
 if __name__ == "__main__":
-    test_melt()
+    test_construct()

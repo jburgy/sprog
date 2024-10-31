@@ -80,22 +80,15 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         super().__init__(arg1, shape=shape, dtype=dtype, copy=copy)
 
     @classmethod
-    def _from_sequence_of_strings(
+    def _from_sequence(
         cls,
-        strings: Sequence[str],
+        data: Sequence[int],
         *,
-        dtype: Dtype | None = None,  # noqa: ARG003
+        dtype: Dtype | None = None,
         copy: bool = False,  # noqa: ARG003
     ) -> Self:
-        return cls(scatter(pd.Series(strings).str.extract(r"^x(\d+)$")))
-
-    @classmethod
-    def _from_factorized(
-        cls,
-        values: npt.NDArray[np.intp],
-        original: Self,
-    ) -> Self:
-        return original.take(values)
+        assert isinstance(dtype, LinearVariable)  # noqa: S101
+        return cls(scatter(data) @ sparse.eye_array(m=len(data)))
 
     def __len__(self) -> int:
         """Avoid "sparse array length is ambiguous; use getnnz()".
@@ -226,6 +219,10 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
             last_indptr += b.indptr[-1]
         indptr[-1] = last_indptr
         return cls((data, indices, indptr), shape=(sum_dim, constant_dim))
+
+    def isna(self) -> npt.NDArray[np.bool_]:
+        """Implement pd.isna."""
+        return np.zeros(len(self), dtype=np.bool_)
 
     def __abs__(self) -> Self:
         """Epigraph for |x|.
