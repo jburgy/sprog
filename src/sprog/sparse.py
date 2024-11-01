@@ -2,24 +2,41 @@
 
 # ruff: noqa: S101
 
+from collections.abc import Sequence
+from numbers import Integral
+
 import numpy as np
-import numpy.typing as npt
 from scipy import sparse
 
 
 def repeat(repeats: int) -> sparse.csr_array:
     """(1 × n) → (repeats × n).
 
+    Args:
+        repeats: number of repetitions
+
+    Returns:
+        sparse array in CSR format
+
     >>> repeat(3) @ [4]
     array([4., 4., 4.])
+
     """
     return sparse.csr_array(
         (np.ones(repeats), (range(repeats), [0] * repeats)), shape=(repeats, 1)
     )
 
 
-def scatter(indices: npt.ArrayLike, m: int = -1, n: int = -1) -> sparse.csr_array:
+def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
     """Scatter consecutive indices of x into (larger) result vector y.
+
+    Args:
+        indices: subset of range to populate (rest will be 0)
+        m: length of range (defaults to :code:`max(indices) + 1`)
+        n: length of domain (defaults to :code:`len(indices)`)
+
+    Returns:
+        sparse array in CSR format
 
     Roughly equivalent to::
 
@@ -28,6 +45,7 @@ def scatter(indices: npt.ArrayLike, m: int = -1, n: int = -1) -> sparse.csr_arra
 
     >>> scatter([1, 3]) @ [6, 7]
     array([0., 6., 0., 7.])
+
     """
     if m < 0:
         m = max(indices) + 1
@@ -42,8 +60,15 @@ def scatter(indices: npt.ArrayLike, m: int = -1, n: int = -1) -> sparse.csr_arra
     )
 
 
-def gather(indices: npt.ArrayLike, n: int = -1) -> sparse.csr_array:
+def gather(indices: Sequence[Integral], n: int = -1) -> sparse.csr_array:
     """Gather subset of x into (smaller) consecutive result vector y.
+
+    Args:
+        indices: subset of domain to select
+        n: length of domain (defaults to :code:`max(indices) + 1`)
+
+    Returns:
+        sparse array in CSR format
 
     Roughly equivalent to::
 
@@ -52,6 +77,7 @@ def gather(indices: npt.ArrayLike, n: int = -1) -> sparse.csr_array:
 
     >>> gather([1, 3]) @ [4, 5, 6, 7]
     array([5., 7.])
+
     """
     m = len(indices)
     if n < 0:
@@ -64,7 +90,7 @@ def gather(indices: npt.ArrayLike, n: int = -1) -> sparse.csr_array:
     )
 
 
-def sumby(by: npt.ArrayLike) -> sparse.csr_array:
+def sumby(by: Sequence[Integral]) -> sparse.csr_array:
     """Compute partial sums defined by unique tuples.
 
     Roughly equivalent to::

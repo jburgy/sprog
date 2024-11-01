@@ -1,4 +1,4 @@
-"""See https://pandas.pydata.org/docs/development/extending.html#extension-types."""  # noqa: E501
+"""See :external+pandas:ref:`extending.extension-types`."""
 
 # flake8: noqa: E203
 # ruff: noqa: SLF001
@@ -58,7 +58,7 @@ class LinearVariable(np.float64, ExtensionDtype):
 
 
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
-    """An instance of ExtensionDtype to represent unknowns."""
+    """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns."""  # noqa: E501
 
     lower: ArrayLike | None = None
     upper: ArrayLike | None = None
@@ -68,7 +68,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         arg1: Any,  # noqa: ANN401
         *,
         shape: tuple | None = None,
-        dtype: Dtype | None = None,
+        dtype: ExtensionDtype | None = None,
         copy: bool = False,
     ) -> None:
         """Instantiate helper variables."""
