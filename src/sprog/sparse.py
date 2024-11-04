@@ -9,11 +9,12 @@ import numpy as np
 from scipy import sparse
 
 
-def repeat(repeats: int) -> sparse.csr_array:
-    """(1 × n) → (repeats × n).
+def repeat(repeats: int, m: int = 1) -> sparse.csr_array:
+    """(m × n) → (repeats · m × n).
 
     Args:
         repeats: number of repetitions
+        m: length of domain (defaults to :code:`1`)
 
     Returns:
         sparse array in CSR format
@@ -23,7 +24,11 @@ def repeat(repeats: int) -> sparse.csr_array:
 
     """
     return sparse.csr_array(
-        (np.ones(repeats), (range(repeats), [0] * repeats)), shape=(repeats, 1)
+        (
+            np.ones(repeats * m),
+            (np.tile(range(repeats), m), np.repeat(range(m), repeats)),
+        ),
+        shape=(repeats * m, m),
     )
 
 

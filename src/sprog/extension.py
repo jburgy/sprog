@@ -50,6 +50,7 @@ class LinearVariable(np.float64, ExtensionDtype):
     type = float
     name = "unknown"
     _supports_2d = False
+    char = "d"
 
     @classmethod
     def construct_array_type(cls) -> "type[ExtensionArray]":
@@ -113,7 +114,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
 
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
-        return type(self)(dot_product_mkl(lhs, self))
+        return self.__class__(dot_product_mkl(lhs, self))
 
     def __getitem__(self, key: PositionalIndexer) -> Self:
         """Object indexing using the `[]` operator."""
@@ -139,9 +140,19 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def __sub__(self, other: ArrayLike) -> Self:
         """Implement self + other."""
         m, n = self.shape
-        if sparse.issparse(other) and 1 == len(other) < m:
-            other = repeat(m) @ other
-        if other.shape[1] < n:
+        m1, n1 = other.shape
+        if sparse.issparse(other) and m1 < m:
+            other = repeat(m // m1, m1) @ other
+        if n < n1:
+            tmp = self.__class__(
+                (self.data, self.indices, self.indptr),
+                shape=(m, n1),
+                dtype=self.dtype,
+            )
+            tmp.lower = self.lower
+            tmp.upper = self.upper
+            return tmp - other
+        if n1 < n:
             other = self.__class__(
                 (other.data, other.indices, other.indptr),
                 shape=(m, n),
@@ -232,7 +243,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
             ⇒ y - x ≥ 0 ∧ y + x ≥
         """
         eye = sparse.eye_array(m=len(self), format="csr")
-        res = type(self)(
+        res = self.__class__(
             sparse.block_array(
                 [[-self, eye], [self, eye]],
                 format="csr",
