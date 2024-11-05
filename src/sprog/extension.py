@@ -113,6 +113,11 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Return :code:`lhs * self` for *lhs* number."""
         return np.full(shape=(1, len(self)), fill_value=lhs) @ self
 
+    def __matmul__(self, rhs: sparse.sparray) -> Self:
+        """Matrix multiplication using binary `@` operator."""
+        n = len(rhs)
+        return self.widen(n) @ rhs if self.shape[1] < n else super().__matmul__(rhs)
+
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
         return self.__class__(dot_product_mkl(lhs, self))
@@ -121,44 +126,33 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
 
+    def widen(self, n: int) -> Self:
+        return self.__class__(
+            (self.data, self.indices, self.indptr),
+            shape=(len(self), n),
+            dtype=self.dtype,
+        )
+
     @unpack_zerodim_and_defer("__add__")
     def __add__(self, other: ArrayLike) -> Self:
         """Implement self - other."""
         # handle np.ndarray
         m, n = self.shape
         if n < (n1 := other.shape[1]):
-            return (
-                self.__class__(
-                    (self.data, self.indices, self.indptr),
-                    shape=(m, n1),
-                    dtype=self.dtype,
-                )
-                + other
-            )
+            return self.widen(n1) + other
         return super().__add__(other)
 
     @unpack_zerodim_and_defer("__sub__")
-    def __sub__(self, other: ArrayLike) -> Self:
+    def __sub__(self, other: Self) -> Self:
         """Implement self + other."""
         m, n = self.shape
         m1, n1 = other.shape
         if sparse.issparse(other) and 1 == m1 < m:
             other = repeat(m) @ other
         if n < n1:
-            return (
-                self.__class__(
-                    (self.data, self.indices, self.indptr),
-                    shape=(m, n1),
-                    dtype=self.dtype,
-                )
-                - other
-            )
+            return self.widen(n1) - other
         if n1 < n:
-            other = self.__class__(
-                (other.data, other.indices, other.indptr),
-                shape=(m, n),
-                dtype=other.dtype,
-            )
+            other = other.widen(n)
         return super().__sub__(other)
 
     @property

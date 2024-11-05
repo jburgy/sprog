@@ -121,17 +121,23 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
     portfolio["broker_1"] = side @ LinearVariableArray(m)
     portfolio["broker_2"] = side @ LinearVariableArray(m)
 
-    margin_terms = [
-        _margin(portfolio, broker, **parameters)
-        for broker, parameters in broker_parameters.items()
-    ]
+    margin_terms = LinearVariableArray._concat_same_type(
+        [
+            _margin(portfolio, broker, **parameters)
+            for broker, parameters in broker_parameters.items()
+        ]
+    )
+    c = np.ones(2).T @ margin_terms
     slacks = LinearVariableArray._concat_same_type(LinearVariableArray.slacks)
     solution = optimize.linprog(
-        c=(c := np.ones(2).T @ LinearVariableArray._concat_same_type(margin_terms)),
+        c=c,
         A_ub=slacks,
         b_ub=np.zeros(len(slacks)),
         A_eq=sparse.hstack(
-            [portfolio["broker_1"] + portfolio["broker_2"], sparse.csr_array((m, 40))],
+            [
+                portfolio["broker_1"] + portfolio["broker_2"],
+                sparse.csr_array((m, len(c) - 2 * m)),
+            ],
             format="csr",
         ),
         b_eq=portfolio["MV"],
@@ -142,8 +148,8 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
     fun: np.ndarray = c.todense() * solution.x
     assert np.isclose(fun.sum(), solution.fun)
 
-    portfolio["broker_1"] = side @ solution.x[:m]
-    portfolio["broker_2"] = side @ solution.x[m : 2 * m]
+    portfolio["broker_1"] = portfolio["broker_1"].array @ solution.x
+    portfolio["broker_2"] = portfolio["broker_2"].array @ solution.x
     margin_checks = pd.DataFrame.from_dict(
         {
             broker: _check_margin(portfolio, broker, **parameters)

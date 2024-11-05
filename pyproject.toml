@@ -27,6 +27,7 @@ addopts = [
     "--doctest-modules",
     "--cov=sprog",
     "--cov-report=html",
+    "--memray",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -36,6 +37,7 @@ packages = ["src/sprog"]
 [tool.uv]
 dev-dependencies = [
     "pytest-cov>=5.0.0",
+    "pytest-memray>=1.7.0",
     "pytest>=8.3.3",
     "ruff>=0.7.0",
     "sphinx-material>=0.0.36",
