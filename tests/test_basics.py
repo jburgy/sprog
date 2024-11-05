@@ -3,6 +3,7 @@
 # ruff: noqa: S101
 
 import pandas as pd
+import pytest
 from pandas._libs import lib
 from pandas.core.construction import extract_array
 from scipy import sparse
@@ -65,5 +66,18 @@ def test_unstack() -> None:
     pd.testing.assert_frame_equal(a, b)
 
 
+def test_resize() -> None:
+    """Test .resize method."""
+    a = LinearVariableArray(sparse.eye_array(3))
+
+    with pytest.raises(ValueError, match=r"shape\[0\]=2 must not be less than m=3"):
+        a.resize(2, 3)
+
+    with pytest.raises(ValueError, match=r"shape\[1\]=2 must not be less than n=3"):
+        a.resize(3, 2)
+
+    assert a.resize(4, 4).shape == (4, 4)
+
+
 if __name__ == "__main__":
-    test_construct()
+    test_resize()

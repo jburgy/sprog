@@ -133,13 +133,7 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
         c=c,
         A_ub=slacks,
         b_ub=np.zeros(len(slacks)),
-        A_eq=sparse.hstack(
-            [
-                portfolio["broker_1"] + portfolio["broker_2"],
-                sparse.csr_array((m, len(c) - 2 * m)),
-            ],
-            format="csr",
-        ),
+        A_eq=(portfolio["broker_1"] + portfolio["broker_2"]).array.resize(m, len(c)),
         b_eq=portfolio["MV"],
     )
     assert solution.success

@@ -26,6 +26,7 @@ from pandas.core.dtypes.dtypes import (
 from pandas.core.indexers import is_scalar_indexer
 from pandas.core.ops import unpack_zerodim_and_defer
 from scipy import sparse
+from scipy.sparse._sputils import check_shape
 
 os.environ["MKL_RT"] = os.path.join(  # noqa: PTH118
     os.environ["VIRTUAL_ENV"],
@@ -116,7 +117,11 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def __matmul__(self, rhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
         n = len(rhs)
-        return self.widen(n) @ rhs if self.shape[1] < n else super().__matmul__(rhs)
+        return (
+            self.resize(len(self), n) @ rhs
+            if self.shape[1] < n
+            else super().__matmul__(rhs)
+        )
 
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
@@ -126,10 +131,31 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Object indexing using the `[]` operator."""
         return self.take([key] if is_scalar_indexer(key, ndim=1) else key)
 
-    def widen(self, n: int) -> Self:
+    def resize(self, *shape: int) -> Self:
+        """Resize to dimensions given by shape."""
+        shape = check_shape(shape)
+        m, n = self.shape
+        if shape[0] < m:
+            msg = f"{shape[0]=} must not be less than {m=}"
+            raise ValueError(msg)
+        if shape[1] < m:
+            msg = f"{shape[1]=} must not be less than {n=}"
+            raise ValueError(msg)
+        m = shape[0] - m
         return self.__class__(
-            (self.data, self.indices, self.indptr),
-            shape=(len(self), n),
+            (
+                self.data,
+                self.indices,
+                np.concatenate(
+                    (
+                        self.indptr,
+                        np.full(m, self.indptr[-1], dtype=self.indptr.dtype),
+                    )
+                )
+                if m > 0
+                else self.indptr,
+            ),
+            shape=shape,
             dtype=self.dtype,
         )
 
@@ -139,7 +165,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         # handle np.ndarray
         m, n = self.shape
         if n < (n1 := other.shape[1]):
-            return self.widen(n1) + other
+            return self.resize(m, n1) + other
         return super().__add__(other)
 
     @unpack_zerodim_and_defer("__sub__")
@@ -150,9 +176,9 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         if sparse.issparse(other) and 1 == m1 < m:
             other = repeat(m) @ other
         if n < n1:
-            return self.widen(n1) - other
+            return self.resize(m, n1) - other
         if n1 < n:
-            other = other.widen(n)
+            other = other.resize(m, n)
         return super().__sub__(other)
 
     @property
