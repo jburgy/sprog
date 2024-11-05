@@ -42,9 +42,9 @@ _offset: int = 0
 
 @register_extension_dtype
 class LinearVariable(np.float64, ExtensionDtype):
-    """See extension types on "Extending pandas".
+    """See :external+pandas:ref:`extending.extension-types`.
 
-    https://pandas.pydata.org/docs/development/extending.html#extension-types.
+    :class:`pandas.api.extensions.ExtensionDtype` subclass
     """
 
     type = float
@@ -108,6 +108,10 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         if "pandas" in inspect.currentframe().f_back.f_code.co_filename:
             return 1
         return super().ndim
+
+    def __rmul__(self, lhs: np.float64) -> Self:
+        """Return :code:`lhs * self` for *lhs* number."""
+        return np.full(shape=(1, len(self)), fill_value=lhs) @ self
 
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""

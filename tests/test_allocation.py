@@ -4,7 +4,6 @@
 # ruff: noqa: RUF018, S101, SLF001
 
 from importlib.resources import files
-from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -12,6 +11,7 @@ import pytest
 from scipy import optimize, sparse
 
 from sprog import aggregate as agg
+from sprog import function as func
 from sprog.extension import LinearVariableArray
 from tests import resources
 
@@ -67,26 +67,22 @@ def _margin(
     skew_penalty_rate: float,
     sector_threshold: float,
     sector_penalty_rate: float,
-) -> list[LinearVariableArray]:
+) -> LinearVariableArray:
     sides = portfolio.groupby("Side")[broker].pipe(agg.sum)
     gmv = sides["Long"] - sides["Short"]
     sector_mv = portfolio.groupby("Sector")[broker].pipe(agg.sum)
 
-    long_excess = LinearVariableArray(1)
-    short_excess = LinearVariableArray(1)
+    long_excess = func.pos(sides["Long"] + (1 + skew_threshold) * sides["Short"])
+    short_excess = func.pos(sides["Long"] * (skew_threshold - 1) - sides["Short"])
     sector_nmv = abs(sector_mv)
-    sector_excess = LinearVariableArray(len(sector_nmv))
+    sector_excess = func.pos(sector_nmv - sector_threshold * gmv)
 
-    return [
+    return (
         gmv * base_rate
-        + np.full((1, 1), skew_penalty_rate) @ long_excess
-        + np.full((1, 1), skew_penalty_rate) @ short_excess
-        + np.full((1, len(sector_nmv)), sector_penalty_rate) @ sector_excess,
-        sides["Long"] + (1 + skew_threshold) * sides["Short"] - long_excess,
-        sides["Long"] * (skew_threshold - 1) - sides["Short"] - short_excess,
-        *cast(LinearVariableArray, sector_nmv.array).slacks[-2:],
-        sector_nmv - sector_threshold * gmv - sector_excess,
-    ]
+        + skew_penalty_rate * long_excess
+        + skew_penalty_rate * short_excess
+        + sector_penalty_rate * sector_excess.array
+    )
 
 
 def _check_margin(
@@ -129,21 +125,11 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
         _margin(portfolio, broker, **parameters)
         for broker, parameters in broker_parameters.items()
     ]
+    slacks = LinearVariableArray._concat_same_type(LinearVariableArray.slacks)
     solution = optimize.linprog(
-        c=(
-            c := np.ones(2).T
-            @ LinearVariableArray._concat_same_type([item[0] for item in margin_terms])
-        ),
-        A_ub=(
-            a_ub := LinearVariableArray._concat_same_type(
-                [
-                    getattr(elem, "array", elem)
-                    for item in margin_terms
-                    for elem in item[1:]
-                ]
-            )
-        ),
-        b_ub=np.zeros(len(a_ub)),
+        c=(c := np.ones(2).T @ LinearVariableArray._concat_same_type(margin_terms)),
+        A_ub=slacks,
+        b_ub=np.zeros(len(slacks)),
         A_eq=sparse.hstack(
             [portfolio["broker_1"] + portfolio["broker_2"], sparse.csr_array((m, 40))],
             format="csr",

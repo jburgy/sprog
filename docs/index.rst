@@ -18,7 +18,14 @@ the familiar and readable :code:`pandas` API.
 extension
 =========
 .. automodule:: sprog.extension
+.. autoclass:: sprog.extension.LinearVariable
 .. autoclass:: sprog.extension.LinearVariableArray
+
+========
+function
+========
+.. automodule:: sprog.function
+.. autofunction:: sprog.function.pos
 
 ======
 sparse
