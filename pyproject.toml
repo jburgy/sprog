@@ -28,6 +28,9 @@ addopts = [
     "--cov=sprog",
     "--cov-report=xml",
     "--memray",
+    "--junitxml=junit.xml",
+    "-o",
+    "junit_family=legacy"
 ]
 
 [tool.hatch.build.targets.sdist]
