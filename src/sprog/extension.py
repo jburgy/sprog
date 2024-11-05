@@ -29,8 +29,7 @@ from scipy import sparse
 from scipy.sparse._sputils import check_shape
 
 os.environ["MKL_RT"] = os.path.join(  # noqa: PTH118
-    os.environ["VIRTUAL_ENV"],
-    "lib/libmkl_rt.so.2",
+    os.environ["VIRTUAL_ENV"], "lib", "libmkl_rt.so.2"
 )
 os.environ["KMP_AFFINITY"] = "disabled"
 
