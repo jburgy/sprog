@@ -4,6 +4,7 @@
 # ruff: noqa: RUF018, S101, SLF001
 
 from importlib.resources import files
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -73,7 +74,7 @@ def _margin(
 
     long_excess = LinearVariableArray(1)
     short_excess = LinearVariableArray(1)
-    sector_nmv = LinearVariableArray(len(sector_mv))
+    sector_nmv = abs(sector_mv)
     sector_excess = LinearVariableArray(len(sector_nmv))
 
     return [
@@ -83,8 +84,7 @@ def _margin(
         + np.full((1, len(sector_nmv)), sector_penalty_rate) @ sector_excess,
         sides["Long"] + (1 + skew_threshold) * sides["Short"] - long_excess,
         sides["Long"] * (skew_threshold - 1) - sides["Short"] - short_excess,
-        sector_mv - sector_nmv,
-        -sector_mv - sector_nmv,
+        *cast(LinearVariableArray, sector_nmv.array).slacks[-2:],
         sector_nmv - sector_threshold * gmv - sector_excess,
     ]
 

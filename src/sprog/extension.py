@@ -7,7 +7,7 @@ import inspect
 import numbers
 import os
 from collections.abc import Sequence
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 import numpy as np
 import numpy.typing as npt
@@ -59,10 +59,13 @@ class LinearVariable(np.float64, ExtensionDtype):
 
 
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
-    """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns."""  # noqa: E501
+    """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns.
 
-    lower: ArrayLike | None = None
-    upper: ArrayLike | None = None
+    This class contains *shared* :term:`mutable` state (:code:`slacks` class variable)
+    even though :external+python:ref:`tut-class-and-instance-variables` warns against it.
+    """  # noqa: E501
+
+    slacks: ClassVar = []
 
     def __init__(
         self,
@@ -97,13 +100,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         CSR matrix represents a linear operator.  We care about the
         length of its image.
         """
-        return (
-            self.lower.size
-            if self.lower is not None
-            else self.upper.size
-            if self.upper is not None
-            else self.shape[0]
-        )
+        return self.shape[0]
 
     @property
     def ndim(self) -> int:
@@ -141,42 +138,24 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Implement self + other."""
         m, n = self.shape
         m1, n1 = other.shape
-        if sparse.issparse(other) and m1 < m:
-            other = repeat(m // m1, m1) @ other
+        if sparse.issparse(other) and 1 == m1 < m:
+            other = repeat(m) @ other
         if n < n1:
-            tmp = self.__class__(
-                (self.data, self.indices, self.indptr),
-                shape=(m, n1),
-                dtype=self.dtype,
+            return (
+                self.__class__(
+                    (self.data, self.indices, self.indptr),
+                    shape=(m, n1),
+                    dtype=self.dtype,
+                )
+                - other
             )
-            tmp.lower = self.lower
-            tmp.upper = self.upper
-            return tmp - other
         if n1 < n:
             other = self.__class__(
                 (other.data, other.indices, other.indptr),
                 shape=(m, n),
                 dtype=other.dtype,
             )
-        res = super().__sub__(other)
-        res.lower = self.lower
-        res.upper = self.upper
-        return res
-
-    @unpack_zerodim_and_defer("__le__")
-    def __le__(self, other: ArrayLike) -> Self:
-        """Generate <= constraint."""
-        constraint: Self = self._with_data(self.data)
-        constraint.upper = np.broadcast_to(other, shape=(len(self),))
-        return constraint
-
-    @unpack_zerodim_and_defer("__eq__")
-    def __eq__(self, other: ArrayLike) -> Self:
-        """Generate == constraint."""
-        constraint: Self = self._with_data(self.data)
-        constraint.lower = other
-        constraint.upper = other
-        return constraint
+        return super().__sub__(other)
 
     @property
     def dtype(self) -> ExtensionDtype:
@@ -242,12 +221,6 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
             ⇒ y ≥ x ∧ y ≥ -x
             ⇒ y - x ≥ 0 ∧ y + x ≥
         """
-        eye = sparse.eye_array(m=len(self), format="csr")
-        res = self.__class__(
-            sparse.block_array(
-                [[-self, eye], [self, eye]],
-                format="csr",
-            )
-        )
-        res.lower = np.zeros(len(self))
-        return res
+        slack = self.__class__(len(self))
+        self.slacks.extend([self - slack, -self - slack])
+        return slack

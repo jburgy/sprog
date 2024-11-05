@@ -40,7 +40,7 @@ napoleon_google_docstring = True
 napoleon_attr_annotations = True
 
 intersphinx_mapping = {
-    "python": ("http://docs.python.org/2", None),
+    "python": ("http://docs.python.org/3", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/dev", None),
     "scipy": ("http://docs.scipy.org/doc/scipy/reference", None),
 }
