@@ -5,7 +5,7 @@
 import pandas as pd
 import pytest
 from pandas._libs import lib
-from pandas.core.construction import extract_array
+from pandas.core.construction import extract_array, sanitize_array
 from scipy import sparse
 
 from sprog.extension import LinearVariable, LinearVariableArray
@@ -16,6 +16,7 @@ def test_construct() -> None:
     obj = LinearVariableArray(sparse.eye_array(3, format="csr"))
     assert lib.is_list_like(obj)
     assert extract_array(obj, extract_numpy=True, extract_range=True) is obj
+    assert sanitize_array(obj, index=[*"ABC"]) is obj
 
     a = pd.array([3, 4], dtype=LinearVariable())
     assert all(a.indptr == [0] * 4 + [1, 2])
@@ -80,4 +81,4 @@ def test_resize() -> None:
 
 
 if __name__ == "__main__":
-    test_resize()
+    test_construct()

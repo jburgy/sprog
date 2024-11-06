@@ -58,6 +58,11 @@ class LinearVariable(np.float64, ExtensionDtype):
         """Return the array type associated with this dtype."""
         return LinearVariableArray
 
+    def __eq__(self, other: "type") -> bool:
+        """Trick sparse_dot_mkl._mkl_interface._is_double."""
+        return super().__eq__(other) or isinstance(self, other)
+
+    __hash__ = ExtensionDtype.__hash__
 
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
     """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns.
@@ -184,8 +189,6 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     @property
     def dtype(self) -> ExtensionDtype:
         """Return an instance of ExtensionDtype."""
-        if "sparse_dot_mkl" in inspect.currentframe().f_back.f_code.co_filename:
-            return np.float64
         return LinearVariable()
 
     def astype(self, dtype: Dtype, *, copy: bool = False) -> ArrayLike:
