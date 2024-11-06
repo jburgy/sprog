@@ -3,7 +3,6 @@
 # flake8: noqa: E203
 # ruff: noqa: SLF001
 
-import inspect
 import numbers
 import os
 import sys
@@ -64,6 +63,7 @@ class LinearVariable(np.float64, ExtensionDtype):
 
     __hash__ = ExtensionDtype.__hash__
 
+
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
     """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns.
 
@@ -111,26 +111,19 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     @property
     def ndim(self) -> int:
         """Trick pandas into thinking we're one dimensional."""
-        if "pandas" in inspect.currentframe().f_back.f_code.co_filename:
-            return 1
-        return super().ndim
+        return 1
 
-    def __rmul__(self, lhs: np.float64) -> Self:
-        """Return :code:`lhs * self` for *lhs* number."""
-        return np.full(shape=(1, len(self)), fill_value=lhs) @ self
-
-    def __matmul__(self, rhs: sparse.sparray) -> Self:
+    def __matmul__(self, rhs: sparse.sparray) -> sparse.csr_array:
         """Matrix multiplication using binary `@` operator."""
         n = len(rhs)
-        return (
-            self.resize(len(self), n) @ rhs
-            if self.shape[1] < n
-            else super().__matmul__(rhs)
+        return dot_product_mkl(
+            sparse.csr_array(self.resize(len(self), n) if self.shape[1] < n else self),
+            rhs,
         )
 
     def __rmatmul__(self, lhs: sparse.sparray) -> Self:
         """Matrix multiplication using binary `@` operator."""
-        return self.__class__(dot_product_mkl(lhs, self))
+        return self.__class__(dot_product_mkl(lhs, sparse.csr_array(self)))
 
     def __getitem__(self, key: PositionalIndexer) -> Self:
         """Object indexing using the `[]` operator."""

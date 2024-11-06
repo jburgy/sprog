@@ -79,9 +79,9 @@ def _margin(
 
     return (
         gmv * base_rate
-        + skew_penalty_rate * long_excess
-        + skew_penalty_rate * short_excess
-        + sector_penalty_rate * sector_excess.array
+        + np.full((1, 1), skew_penalty_rate) @ long_excess
+        + np.full((1, 1), skew_penalty_rate) @ short_excess
+        + np.full((1, len(sector_excess)), sector_penalty_rate) @ sector_excess.array
     )
 
 
@@ -131,9 +131,11 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
     slacks = LinearVariableArray._concat_same_type(LinearVariableArray.slacks)
     solution = optimize.linprog(
         c=c,
-        A_ub=slacks,
+        A_ub=sparse.csr_array(slacks),
         b_ub=np.zeros(len(slacks)),
-        A_eq=(portfolio["broker_1"] + portfolio["broker_2"]).array.resize(m, len(c)),
+        A_eq=sparse.csr_array(
+            (portfolio["broker_1"] + portfolio["broker_2"]).array.resize(m, len(c))
+        ),
         b_eq=portfolio["MV"],
     )
     assert solution.success
