@@ -6,6 +6,7 @@
 import inspect
 import numbers
 import os
+import sys
 from collections.abc import Sequence
 from typing import Any, ClassVar, Self
 
@@ -29,7 +30,7 @@ from scipy import sparse
 from scipy.sparse._sputils import check_shape
 
 os.environ["MKL_RT"] = os.path.join(  # noqa: PTH118
-    os.environ["VIRTUAL_ENV"], "lib", "libmkl_rt.so.2"
+    sys.prefix, sys.platlibdir, "libmkl_rt.so.2"
 )
 os.environ["KMP_AFFINITY"] = "disabled"
 
