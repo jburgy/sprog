@@ -57,12 +57,6 @@ class LinearVariable(np.float64, ExtensionDtype):
         """Return the array type associated with this dtype."""
         return LinearVariableArray
 
-    def __eq__(self, other: "type") -> bool:
-        """Trick sparse_dot_mkl._mkl_interface._is_double."""
-        return super().__eq__(other) or isinstance(self, other)
-
-    __hash__ = ExtensionDtype.__hash__
-
 
 class LinearVariableArray(sparse.csr_array, ExtensionArray):
     """An instance of :class:`pandas.api.extensions.ExtensionArray` to represent unknowns.
@@ -235,11 +229,16 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         return np.zeros(len(self), dtype=np.bool_)
 
     def __abs__(self) -> Self:
-        """Epigraph for |x|.
+        """Epigraph for :math:`|x|`.
 
-        y = abs(x)
+        .. math::
+
+            y = |x|
+
             ⇒ y ≥ x ∧ y ≥ -x
-            ⇒ y - x ≥ 0 ∧ y + x ≥
+
+            ⇒ x - y ≤ 0 ∧ -x - y ≤ 0
+
         """
         slack = self.__class__(len(self))
         self.slacks.extend([self - slack, -self - slack])

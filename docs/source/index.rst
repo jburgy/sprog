@@ -54,6 +54,7 @@ extension
 .. automodule:: sprog.extension
 .. autoclass:: sprog.extension.LinearVariable
 .. autoclass:: sprog.extension.LinearVariableArray
+.. automethod:: sprog.extension.LinearVariableArray.__abs__
 
 ========
 function
