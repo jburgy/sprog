@@ -6,6 +6,18 @@
 sprog documentation
 ===================
 
+.. toctree::
+
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+
+   sprog
+   sprog.extension
+   sprog.sparse
+   sprog.aggregate
+   sprog.function
+
 :mod:`sprog` is a python `Algebraic Modeling <https://en.wikipedia.org/wiki/Algebraic_modeling_language>`_
 toolkit to define and solve `Linear Programs <https://en.wikipedia.org/wiki/Linear_programming>`_
 using the familiar and readable :code:`pandas` API. Popular libraries like
@@ -43,30 +55,3 @@ To manage complexity, :mod:`sprog` expressions integrate with :mod:`pandas`.
 This lets users leverage :mod:`pandas`' approach to :external+pandas:ref:`indexing`.
 As a practical matter, this means that :class:`sprog.extension.LinearVariableArray`
 sub-classes :class:`scipy.sparse.csr_array` *and* :class:`pandas.api.extensions.ExtensionArray`.
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-=========
-extension
-=========
-.. automodule:: sprog.extension
-.. autoclass:: sprog.extension.LinearVariable
-.. autoclass:: sprog.extension.LinearVariableArray
-.. automethod:: sprog.extension.LinearVariableArray.__abs__
-
-========
-function
-========
-.. automodule:: sprog.function
-.. autofunction:: sprog.function.pos
-
-======
-sparse
-======
-.. automodule:: sprog.sparse
-.. autofunction:: sprog.sparse.gather
-.. autofunction:: sprog.sparse.scatter
-.. autofunction:: sprog.sparse.repeat
-

@@ -163,3 +163,4 @@ cython_debug/
 
 # Sphinx documentation
 _build/
+_autosummary/

@@ -22,7 +22,11 @@ release = "0.1.0"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx.ext.duration",
+    "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
 ]
@@ -44,3 +48,5 @@ intersphinx_mapping = {
     "pandas": ("http://pandas.pydata.org/pandas-docs/dev", None),
     "scipy": ("http://docs.scipy.org/doc/scipy/reference", None),
 }
+
+autosummary_generate = True
