@@ -112,36 +112,28 @@ def _check_margin(
 def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) -> None:
     """Allocate stocks between brokers."""
     m = len(portfolio)
-    side = sparse.diags_array(
-        [portfolio["Side"].map({"Long": 1.0, "Short": -1.0})],
-        offsets=[0],
-        shape=(m, m),
-        format="csr",
-    )
-    portfolio["broker_1"] = side @ LinearVariableArray(m)
-    portfolio["broker_2"] = side @ LinearVariableArray(m)
+    sign = sparse.diags_array([np.sign(portfolio["MV"])], offsets=[0], format="csr")
+    portfolio["broker_1"] = sign @ LinearVariableArray(m)
+    portfolio["broker_2"] = sign @ LinearVariableArray(m)
 
-    margin_terms = LinearVariableArray._concat_same_type(
-        [
-            _margin(portfolio, broker, **parameters)
-            for broker, parameters in broker_parameters.items()
-        ]
+    c = sum(
+        _margin(portfolio, broker, **parameters)
+        for broker, parameters in broker_parameters.items()
     )
-    c = np.ones(2).T @ margin_terms
     slacks = LinearVariableArray._concat_same_type(LinearVariableArray.slacks)
     solution = optimize.linprog(
         c=c,
         A_ub=sparse.csr_array(slacks),
         b_ub=np.zeros(len(slacks)),
         A_eq=sparse.csr_array(
-            (portfolio["broker_1"] + portfolio["broker_2"]).array.resize(m, len(c))
+            (portfolio["broker_1"] + portfolio["broker_2"]).array, shape=(m, c.shape[1])
         ),
         b_eq=portfolio["MV"],
     )
     assert solution.success
 
     assert isinstance(c, sparse.csr_array)
-    fun: np.ndarray = c.todense() * solution.x
+    fun: np.ndarray = c @ np.diag(solution.x)
     assert np.isclose(fun.sum(), solution.fun)
 
     portfolio["broker_1"] = portfolio["broker_1"].array @ solution.x
@@ -153,18 +145,18 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
         }
     )
     n = m + m
-    assert np.isclose(fun[:m].sum(), margin_checks.loc["base", "broker_1"])
-    assert np.isclose(fun[m:n].sum(), margin_checks.loc["base", "broker_2"])
-    assert np.isclose(fun[n], margin_checks.loc["long", "broker_1"])
-    assert np.isclose(fun[n + 1], margin_checks.loc["short", "broker_1"])
-    assert np.allclose(fun[n + 1 : n + 10], 0.0)
+    assert np.isclose(fun[0, :m].sum(), margin_checks.loc["base", "broker_1"])
+    assert np.isclose(fun[0, m:n].sum(), margin_checks.loc["base", "broker_2"])
+    assert np.isclose(fun[0, n], margin_checks.loc["long", "broker_1"])
+    assert np.isclose(fun[0, n + 1], margin_checks.loc["short", "broker_1"])
+    assert np.allclose(fun[0, n + 1 : n + 10], 0.0)
     assert np.isclose(
-        fun[n + 10 : n + 19].sum(), margin_checks.loc["sector", "broker_1"]
+        fun[0, n + 10 : n + 19].sum(), margin_checks.loc["sector", "broker_1"]
     )
-    assert np.isclose(fun[n + 20], margin_checks.loc["long", "broker_2"])
-    assert np.isclose(fun[n + 21], margin_checks.loc["short", "broker_2"])
-    assert np.allclose(fun[n + 21 : n + 30], 0.0)
-    assert np.isclose(fun[n + 30 :].sum(), margin_checks.loc["sector", "broker_2"])
+    assert np.isclose(fun[0, n + 20], margin_checks.loc["long", "broker_2"])
+    assert np.isclose(fun[0, n + 21], margin_checks.loc["short", "broker_2"])
+    assert np.allclose(fun[0, n + 21 : n + 30], 0.0)
+    assert np.isclose(fun[0, n + 30 :].sum(), margin_checks.loc["sector", "broker_2"])
 
 
 if __name__ == "__main__":

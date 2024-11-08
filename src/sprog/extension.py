@@ -160,6 +160,8 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def __add__(self, other: ArrayLike) -> Self:
         """Implement self - other."""
         # handle np.ndarray
+        if other is 0:  # noqa: F632
+            return self
         m, n = self.shape
         if n < (n1 := other.shape[1]):
             return self.resize(m, n1) + other
