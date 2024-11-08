@@ -28,7 +28,7 @@ def test_find_lib_gcc(lib_mkl: Path) -> None:
         [
             shutil.which("gcc"),
             "-Wl,-t",
-            "-Wl,-w",
+            "-Wl,-shared",
             f"-Wl,-L,{lib_mkl.parent}",
             "-o",
             os.devnull,
@@ -51,6 +51,7 @@ def test_find_lib_ld(lib_mkl: Path) -> None:
         [
             shutil.which("ld"),
             "-t",
+            "-shared",
             "-L",
             str(lib_mkl.parent),
             "-o",
