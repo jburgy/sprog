@@ -11,9 +11,6 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "env": {
-                // "MKL_RT": "/opt/intel/oneapi/mkl/latest/lib/libmkl_rt.so",
-                "MKL_RT": ".venv/lib/libmkl_rt.so.2",
-                "KMP_AFFINITY": "disabled",
                 "PYTHONPATH": "."
             },
             "justMyCode": false

@@ -7,11 +7,13 @@ import numbers
 import os
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any, ClassVar, Self
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from packaging.version import parse
 from pandas._typing import (
     ArrayLike,
     Dtype,
@@ -28,8 +30,11 @@ from pandas.core.ops import unpack_zerodim_and_defer
 from scipy import sparse
 from scipy.sparse._sputils import check_shape
 
-os.environ["MKL_RT"] = os.path.join(  # noqa: PTH118
-    sys.prefix, sys.platlibdir, "libmkl_rt.so.2"
+os.environ["MKL_RT"] = str(  # noqa: I001
+    max(
+        Path(sys.prefix, sys.platlibdir).glob("libmkl_rt.so.*"),
+        key=lambda path: parse(path.name.rpartition(".")[-1]),
+    )
 )
 os.environ["KMP_AFFINITY"] = "disabled"
 
