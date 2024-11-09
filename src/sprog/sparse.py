@@ -9,29 +9,6 @@ import numpy as np
 from scipy import sparse
 
 
-def repeat(repeats: int, m: int = 1) -> sparse.csr_array:
-    """(m × n) → (repeats · m × n).
-
-    Args:
-        repeats: number of repetitions
-        m: length of domain (defaults to :code:`1`)
-
-    Returns:
-        sparse array in CSR format
-
-    >>> repeat(3) @ [4]
-    array([4., 4., 4.])
-
-    """
-    return sparse.csr_array(
-        (
-            np.ones(repeats * m),
-            (np.tile(range(repeats), m), np.repeat(range(m), repeats)),
-        ),
-        shape=(repeats * m, m),
-    )
-
-
 def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
     """Scatter consecutive indices of x into (larger) result vector y.
 
@@ -88,7 +65,6 @@ def gather(indices: Sequence[Integral], n: int = -1) -> sparse.csr_array:
     if n < 0:
         n = max(indices) + 1
     assert n >= max(indices) + 1
-    assert m <= n
     return sparse.csr_array(
         (np.ones(shape=len(indices)), indices, range(len(indices) + 1)),
         shape=(m, n),

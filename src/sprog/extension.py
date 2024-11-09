@@ -40,7 +40,7 @@ os.environ["KMP_AFFINITY"] = "disabled"
 
 from sparse_dot_mkl import dot_product_mkl  # noqa: E402
 
-from sprog.sparse import gather, repeat, scatter  # noqa: E402
+from sprog.sparse import gather, scatter  # noqa: E402
 
 _offset: int = 0
 
@@ -160,7 +160,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     def __add__(self, other: ArrayLike) -> Self:
         """Implement self - other."""
         # handle np.ndarray
-        if other is 0:  # noqa: F632
+        if isinstance(other, int) and other == 0:
             return self
         m, n = self.shape
         if n < (n1 := other.shape[1]):
@@ -173,7 +173,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         m, n = self.shape
         m1, n1 = other.shape
         if sparse.issparse(other) and 1 == m1 < m:
-            other = repeat(m) @ other
+            other = gather([0] * m) @ other
         if n < n1:
             return self.resize(m, n1) - other
         if n1 < n:
