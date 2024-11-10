@@ -69,22 +69,3 @@ def gather(indices: Sequence[Integral], n: int = -1) -> sparse.csr_array:
         (np.ones(shape=len(indices)), indices, range(len(indices) + 1)),
         shape=(m, n),
     )
-
-
-def sumby(by: Sequence[Integral]) -> sparse.csr_array:
-    """Compute partial sums defined by unique tuples.
-
-    Roughly equivalent to::
-
-        sums = defaultdict(float)
-        for i, key in enumerate(by):
-            sums[key] += x[i]
-
-    >>> sumby([(0, 0), (0, 1), (1, 0), (1, 0), (1, 1), (1, 1)]) @ range(6)
-    array([0., 1., 5., 9.])
-    """
-    keys, inverse = np.unique(by, axis=0, return_inverse=True)
-    return sparse.csr_array(
-        (np.ones(shape=len(by)), (inverse, range(len(by)))),
-        shape=(len(keys), len(by)),
-    )
