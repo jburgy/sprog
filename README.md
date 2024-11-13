@@ -1,5 +1,6 @@
 # sprog
 
+[![PyPI version](https://badge.fury.io/py/sprog.svg)](https://badge.fury.io/py/sprog)
 [![Build](https://github.com/jburgy/sprog/actions/workflows/pythonpackage.yml/badge.svg)](https://github.com/jburgy/sprog/actions/workflows/pythonpackage.yml)
 [![license](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![docs](https://readthedocs.org/projects/sprog/badge/)](https://sprog.rtfd.io/)
