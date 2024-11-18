@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "python": "/home/jburgy/sprog/.venv/bin/python",
             "env": {
                 "PYTHONPATH": "."
             },

@@ -20,6 +20,7 @@ build-backend = "hatchling.build"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = ["COM812", "D203", "D211", "D213", "ISC001", "PLR0913", "RUF002", "RUF100"]
+mccabe.max-complexity = 13
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
