@@ -80,7 +80,9 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
             rhs[row] = (
                 partial(b_ub.__setitem__, index)
                 if kind in "GL"
-                else partial(b_eq.__setitem__, index) if kind == "E" else None
+                else partial(b_eq.__setitem__, index)
+                if kind == "E"
+                else None
             )
         elif section in "COLUMNS":
             col = columns.setdefault(line[4:14].rstrip(), len(columns))
