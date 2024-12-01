@@ -84,7 +84,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         if isinstance(arg1, numbers.Integral):
             global _offset  # noqa: PLW0603
             n = arg1 + _offset
-            arg1 = sparse.eye_array(m=arg1, n=n, k=_offset, format="csr")
+            arg1 = gather(range(_offset, n), m=arg1, n=n)
             _offset = n
         super().__init__(arg1, shape=shape, dtype=dtype, copy=copy)
 
@@ -97,7 +97,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         copy: bool = False,  # noqa: ARG003
     ) -> Self:
         assert isinstance(dtype, LinearVariable)  # noqa: S101
-        return cls(scatter(data) @ sparse.eye_array(m=len(data)))
+        return cls(scatter(data))
 
     def __len__(self) -> int:
         """Avoid "sparse array length is ambiguous; use getnnz()".

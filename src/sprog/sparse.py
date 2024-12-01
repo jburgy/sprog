@@ -2,8 +2,10 @@
 
 # ruff: noqa: S101
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
+from itertools import pairwise, starmap
 from numbers import Integral
+from operator import __eq__, __sub__
 
 import numpy as np
 from scipy import sparse
@@ -65,3 +67,64 @@ def gather(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_
         n = max(indices) + 1
     assert n >= max(indices) + 1
     return sparse.csr_array((np.ones(shape=k), (range(k), indices)), shape=(m, n))
+
+
+def _increments(s: Sequence[Integral]) -> Iterable[Integral]:
+    return starmap(__sub__, pairwise(s))
+
+
+def isrelation(s: sparse.csr_array) -> bool:
+    """Check that all entries are 0 or 1."""
+    return s.nnz <= min(s.shape) and all(map(np.float64(1.0).__eq__, s.data))
+
+
+def isonto(s: sparse.csr_array) -> bool:
+    """Each element of the range has at least one pre-image."""
+    return max(_increments(s.indptr)) < 0
+
+
+def isgather(s: sparse.csr_array) -> bool:
+    """Test for surjective relation.
+
+    >>> isgather(gather([1, 3]))
+    np.True_
+    >>> isgather(scatter([1, 3]))
+    False
+    >>> isgather(scatter(range(3)))  # also onto
+    np.True_
+    """
+    m, n = s.shape
+    return m <= n and isrelation(s) and isonto(s)
+
+
+def isscatter(s: sparse.csr_array) -> bool:
+    """Test for injective relation.
+
+    >>> isscatter(scatter([1, 3]))
+    True
+    >>> isscatter(gather([1, 3]))
+    False
+    >>> isscatter(gather(range(3)))  # also sequential
+    True
+    """
+    m, n = s.shape
+    return m >= n and isrelation(s) and all(map(__eq__, s.indices, range(n)))
+
+
+def isvariable(s: sparse.csr_array) -> bool:
+    """Test for sequential injective relation.
+
+    >>> isvariable(gather(range(3)))
+    True
+    >>> isvariable(gather(range(1, 3)))
+    True
+    >>> isvariable(scatter(range(3)))
+    True
+    >>> isvariable(scatter(range(1, 3)))  # not onto
+    False
+    >>> isvariable(gather([1, 3]))  # not sequential
+    False
+    >>> isvariable(scatter([1, 3]))  # neither sequential nor onto
+    False
+    """
+    return isgather(s) and set(_increments(s.indices)) == {-1}
