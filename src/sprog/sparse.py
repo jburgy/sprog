@@ -12,7 +12,7 @@ from scipy import sparse
 
 
 def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
-    """Scatter consecutive indices of x into (larger) result vector y.
+    """`Scatter`_ consecutive indices of x into (larger) result vector y.
 
     Args:
         indices: subset of range to populate (rest will be 0)
@@ -29,6 +29,8 @@ def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr
     >>> scatter([1, 3]) @ [6, 7]
     array([0., 6., 0., 7.])
 
+    .. _Scatter: https://w.wiki/CHWk
+
     """
     if m < 0:
         m = max(indices) + 1
@@ -42,7 +44,7 @@ def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr
 
 
 def gather(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
-    """Gather subset of x into (smaller) consecutive result vector y.
+    """`Gather`_ subset of x into (smaller) consecutive result vector y.
 
     Args:
         indices: subset of domain to select
@@ -58,6 +60,8 @@ def gather(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_
 
     >>> gather([1, 3]) @ [4, 5, 6, 7]
     array([5., 7.])
+
+    .. _Gather: https://w.wiki/CHWi
 
     """
     k = len(indices)
