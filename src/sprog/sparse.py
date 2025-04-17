@@ -11,13 +11,16 @@ import numpy as np
 from scipy import sparse
 
 
-def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
+def scatter(
+    indices: Sequence[Integral], *, m: int = -1, n: int = -1, grouping: bool = False
+) -> sparse.csr_array:
     """`Scatter`_ consecutive indices of x into (larger) result vector y.
 
     Args:
         indices: subset of range to populate (rest will be 0)
         m: length of range (defaults to :code:`max(indices) + 1`)
         n: length of domain (defaults to :code:`len(indices)`)
+        grouping: skip :code:`m >= n` assertion (defaults to :code:`False`)
 
     Returns:
         sparse array in CSR format
@@ -39,11 +42,13 @@ def scatter(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr
         n = k
     assert m >= max(indices) + 1
     assert n >= k
-    assert m >= n
+    assert grouping or m >= n
     return sparse.csr_array((np.ones(shape=k), (indices, range(k))), shape=(m, n))
 
 
-def gather(indices: Sequence[Integral], m: int = -1, n: int = -1) -> sparse.csr_array:
+def gather(
+    indices: Sequence[Integral], *, m: int = -1, n: int = -1
+) -> sparse.csr_array:
     """`Gather`_ subset of x into (smaller) consecutive result vector y.
 
     Args:
