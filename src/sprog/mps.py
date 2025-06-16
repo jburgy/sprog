@@ -29,7 +29,7 @@ class CscBuilder:
     def insert(self, row: int, col: int, value: float) -> None:
         """Insert `value` at `(row, col)`."""
         while col >= len(self.indptr):
-            self.indptr.append(len(self.indices))
+            self.indptr.append(len(self.indices))  # type: ignore[arg-type]
         self.indices.append(row)
         self.data.append(value)
 
@@ -44,17 +44,19 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
     """Solve linear program in Mathematical Programming System."""
     flip = set()
     setter = {}
-    n_ub = count()
-    n_eq = count()
-    columns = {}
+    count_ub = count()
+    count_eq = count()
+    columns: dict[str, int] = {}
 
-    c = {}
+    c: dict[int, float] = {}
     a_ub = CscBuilder()
     a_eq = CscBuilder()
-    b_ub = {}
-    b_eq = {}
+    b_ub: dict[int, float] = {}
+    b_eq: dict[int, float] = {}
     rhs = {}
-    bounds = {"LO": {}, "UP": {}}
+    bounds: dict[str, dict[int, float]] = {"LO": {}, "UP": {}}
+    section = ""
+    index = -1
     for line in lines:
         if not line[:1].isspace():
             section = line[:14].strip()
@@ -68,10 +70,10 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
                 c.__setitem__
                 if kind == "N"
                 else (
-                    partial(a_ub.insert, (index := next(n_ub)))
+                    partial(a_ub.insert, (index := next(count_ub)))
                     if kind in "GL"
                     else (
-                        partial(a_eq.insert, (index := next(n_eq)))
+                        partial(a_eq.insert, (index := next(count_eq)))
                         if kind == "E"
                         else None
                     )
@@ -91,38 +93,38 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
                 if not row:
                     continue
                 value = float(line[offset + 10 : offset + 25])  # noqa: E203
-                setter[row](col, -value if row in flip else value)
+                setter[row](col, -value if row in flip else value)  # type: ignore[misc]
         elif section == "RHS":
             for offset in _OFFSETS:
                 row = line[offset : offset + 7].rstrip()  # noqa: E203
                 if not row:
                     continue
                 value = float(line[offset + 10 : offset + 25])  # noqa: E203
-                rhs[row](-value if row in flip else value)
+                rhs[row](-value if row in flip else value)  # type: ignore[misc]
         elif section == "BOUNDS":
             col = columns[line[14:21].rstrip()]
             bounds[line[1:3]][col] = float(line[24:39])
     assert section == "ENDATA"
 
-    n_ub = next(n_ub)
-    n_eq = next(n_eq)
-    a_ub.indptr.append(len(a_ub.indices))
-    a_eq.indptr.append(len(a_eq.indices))
+    n_ub = next(count_ub)
+    n_eq = next(count_eq)
+    a_ub.indptr.append(len(a_ub.indices))  # type: ignore[arg-type]
+    a_eq.indptr.append(len(a_eq.indices))  # type: ignore[arg-type]
 
     tmp = np.zeros((len(columns), 2))
     tmp[:, 1] = np.nan
     for key, val in bounds.items():
         tmp[list(val), ["LO", "UP"].index(key)] = list(val.values())
 
-    return optimize.linprog(
+    return optimize.linprog(  # type: ignore[call-overload]
         c=_array_from_dict(len(columns), c),
-        A_ub=sparse.csc_array(
-            (a_ub.data, a_ub.indices, a_ub.indptr), shape=(n_ub, len(columns))
+        A_ub=sparse.csc_array(  # type: ignore[type-var]
+            (a_ub.data, a_ub.indices, a_ub.indptr), shape=(n_ub, len(columns))  # type: ignore[arg-type]
         ),
         b_ub=_array_from_dict(n_ub, b_ub),
-        A_eq=sparse.csc_array(
-            (a_eq.data, a_eq.indices, a_eq.indptr), shape=(n_eq, len(columns))
+        A_eq=sparse.csc_array(  # type: ignore[type-var]
+            (a_eq.data, a_eq.indices, a_eq.indptr), shape=(n_eq, len(columns))  # type: ignore[arg-type]
         ),
         b_eq=_array_from_dict(n_eq, b_eq),
-        bounds=tmp,
+        bounds=tmp,  # type: ignore[arg-type]
     )

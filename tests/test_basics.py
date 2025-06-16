@@ -15,14 +15,14 @@ def test_construct() -> None:
     """Test LinearVariableArray.__init__."""
     obj = LinearVariableArray(sparse.eye_array(3, format="csr"))
     assert lib.is_list_like(obj)
-    assert extract_array(obj, extract_numpy=True, extract_range=True) is obj
+    assert extract_array(obj, extract_numpy=True, extract_range=True) is obj  # type: ignore[call-arg]
     assert sanitize_array(obj, index=[*"ABC"]) is obj
 
     a = pd.array([3, 4], dtype=LinearVariable())
-    assert all(a.indptr == [0] * 4 + [1, 2])
+    assert all(a.indptr == [0] * 4 + [1, 2])  # type: ignore[attr-defined]
     assert (a != a.astype(float)).nnz == 0
 
-    s = pd.Series(obj, index=[*"ABC"])
+    s: pd.Series = pd.Series(obj, index=[*"ABC"])
     assert isinstance(s.dtype, LinearVariable)
 
     frame = pd.DataFrame({"data": obj}, index=[*"ABC"])
@@ -33,7 +33,7 @@ def test_construct() -> None:
 def test_take() -> None:
     """Test indexing and selecting data."""
     obj = LinearVariableArray(sparse.eye_array(3, format="csr"))
-    ser = pd.Series(obj, index=[*"ABC"])
+    ser: pd.Series = pd.Series(obj, index=[*"ABC"])
     loc = ser.loc[["A", "C"]]
     assert isinstance(loc, pd.Series)
 
@@ -48,7 +48,7 @@ def test_melt() -> None:
         index=[*"abc"],
     )
     narrow = wide.melt(ignore_index=False)
-    assert (sparse.eye_array(6) != narrow["value"].array).nnz == 0
+    assert (sparse.eye_array(6) != narrow["value"].array).nnz == 0  # type: ignore[attr-defined]
 
 
 def test_unstack() -> None:

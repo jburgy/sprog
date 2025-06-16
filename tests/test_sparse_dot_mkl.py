@@ -6,8 +6,9 @@ import os
 import shutil
 import subprocess
 import sys
-from ctypes.util import _is_elf
+from ctypes.util import _is_elf  # type: ignore[attr-defined]
 from pathlib import Path
+from typing import cast
 
 import pytest
 from packaging.version import parse
@@ -26,7 +27,7 @@ def test_find_lib_gcc(lib_mkl: Path) -> None:
     """Understand why :func:`ctypes.util._findLib_gcc` doesn't work."""
     output = subprocess.check_output(
         [
-            shutil.which("gcc"),
+            cast("str", shutil.which("gcc")),
             "-Wl,-t",
             "-Wl,-shared",
             f"-Wl,-L,{lib_mkl.parent}",
@@ -49,7 +50,7 @@ def test_find_lib_ld(lib_mkl: Path) -> None:
     """Understand why :func:`ctypes.util._findLib_ld` doesn't work."""
     output = subprocess.check_output(
         [
-            shutil.which("ld"),
+            cast("str", shutil.which("ld")),
             "-t",
             "-shared",
             "-L",

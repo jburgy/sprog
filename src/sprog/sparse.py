@@ -6,6 +6,7 @@ from collections.abc import Iterable, Sequence
 from itertools import pairwise, starmap
 from numbers import Integral
 from operator import __eq__, __sub__
+from typing import cast
 
 import numpy as np
 from scipy import sparse
@@ -36,11 +37,11 @@ def scatter(
 
     """
     if m < 0:
-        m = max(indices) + 1
+        m = cast("int", max(indices)) + 1
     k = len(indices)
     if n < 0:
         n = k
-    assert m >= max(indices) + 1
+    assert m >= cast("int", max(indices)) + 1
     assert n >= k
     assert grouping or m >= n
     return sparse.csr_array((np.ones(shape=k), (indices, range(k))), shape=(m, n))
@@ -73,8 +74,8 @@ def gather(
     if m < 0:
         m = k
     if n < 0:
-        n = max(indices) + 1
-    assert n >= max(indices) + 1
+        n = cast("int", max(indices)) + 1
+    assert n >= cast("int", max(indices)) + 1
     return sparse.csr_array((np.ones(shape=k), (range(k), indices)), shape=(m, n))
 
 
@@ -89,7 +90,7 @@ def isrelation(s: sparse.csr_array) -> bool:
 
 def isonto(s: sparse.csr_array) -> bool:
     """Each element of the range has at least one pre-image."""
-    return max(_increments(s.indptr)) < 0
+    return max(_increments(cast("Sequence[Integral]", s.indptr))) < 0
 
 
 def isgather(s: sparse.csr_array) -> bool:
@@ -102,7 +103,7 @@ def isgather(s: sparse.csr_array) -> bool:
     >>> isgather(scatter(range(3)))  # also onto
     np.True_
     """
-    m, n = s.shape
+    m, n = cast("tuple[int, int]", s.shape)
     return m <= n and isrelation(s) and isonto(s)
 
 
@@ -116,7 +117,7 @@ def isscatter(s: sparse.csr_array) -> bool:
     >>> isscatter(gather(range(3)))  # also sequential
     True
     """
-    m, n = s.shape
+    m, n = cast("tuple[int, int]", s.shape)
     return m >= n and isrelation(s) and all(map(__eq__, s.indices, range(n)))
 
 
@@ -136,4 +137,6 @@ def isvariable(s: sparse.csr_array) -> bool:
     >>> isvariable(scatter([1, 3]))  # neither sequential nor onto
     False
     """
-    return isgather(s) and set(_increments(s.indices)) == {-1}
+    return isgather(s) and set(_increments(cast("Sequence[Integral]", s.indices))) == {
+        -1
+    }
