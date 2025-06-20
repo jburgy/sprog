@@ -11,13 +11,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: astral-sh/setup-uv@v3
+    - uses: astral-sh/setup-uv@v6
       with:
         python-version: 3.13
         enable-cache: true
         cache-dependency-glob: "uv.lock"
     - run: uv sync --all-extras --dev
     - uses: astral-sh/ruff-action@v3
+      env:
+        RUFF_OUTPUT_FORMAT: github
     - run: uv run mypy .
     - run: uv run pytest
     - uses: codecov/codecov-action@v4

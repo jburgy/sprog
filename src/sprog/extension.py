@@ -216,7 +216,7 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
         """Concatenate multiple array of this dtype."""
         data = np.concatenate([b.data for b in to_concat])
         constant_dim = max(b._shape_as_2d[1] for b in to_concat)  # type: ignore[attr-defined]
-        idx_dtype = get_index_dtype(
+        idx_dtype = get_index_dtype(  # type: ignore[call-overload]
             arrays=[b.indptr for b in to_concat],  # type: ignore[arg-type]
             maxval=max(data.size, constant_dim),
         )
