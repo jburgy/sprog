@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
+    env:
+      RUFF_OUTPUT_FORMAT: github
 
     steps:
     - uses: actions/checkout@v4
@@ -18,9 +20,7 @@ jobs:
         cache-dependency-glob: "uv.lock"
     - run: uv sync --all-extras --dev
     - uses: astral-sh/ruff-action@v3
-      env:
-        RUFF_OUTPUT_FORMAT: github
-    - run: uv run mypy .
+    - run: uv run mypy src/ tests/
     - run: uv run pytest
     - uses: codecov/codecov-action@v4
       with:
