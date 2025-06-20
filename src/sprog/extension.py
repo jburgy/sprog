@@ -28,7 +28,7 @@ from pandas.core.dtypes.dtypes import (
 from pandas.core.indexers import is_scalar_indexer
 from pandas.core.ops import unpack_zerodim_and_defer  # type: ignore[attr-defined]
 from scipy import sparse
-from scipy.sparse._sputils import check_shape
+from scipy.sparse._sputils import check_shape, get_index_dtype
 
 os.environ["MKL_RT"] = str(  # noqa: I001
     max(
@@ -214,8 +214,6 @@ class LinearVariableArray(sparse.csr_array, ExtensionArray):
     @classmethod
     def _concat_same_type(cls, to_concat: Sequence[Self]) -> Self:
         """Concatenate multiple array of this dtype."""
-        from scipy.sparse._sputils import get_index_dtype
-
         data = np.concatenate([b.data for b in to_concat])
         constant_dim = max(b._shape_as_2d[1] for b in to_concat)  # type: ignore[attr-defined]
         idx_dtype = get_index_dtype(
