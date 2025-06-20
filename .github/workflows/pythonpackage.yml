@@ -20,6 +20,8 @@ jobs:
         cache-dependency-glob: "uv.lock"
     - run: uv sync --all-extras --dev
     - uses: astral-sh/ruff-action@v3
+      with:
+        version: "latest"
     - run: uv run mypy src/ tests/
     - run: uv run pytest
     - uses: codecov/codecov-action@v4
