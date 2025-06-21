@@ -38,8 +38,8 @@ addopts = [
 ignore-vcs = true
 packages = ["src/sprog"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "mypy>=1.16.1",
     "pandas-stubs>=2.2.3.250527",
     "pytest-cov>=5.0.0",
@@ -54,6 +54,7 @@ dev-dependencies = [
 
 [tool.mypy]
 enable_error_code = ["ignore-without-code"]
+exclude = ["^.venv/"]
 
 [tool.coverage.run]
 core = "sysmon"
