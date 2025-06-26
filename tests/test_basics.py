@@ -15,11 +15,11 @@ def test_construct() -> None:
     """Test LinearVariableArray.__init__."""
     obj = LinearVariableArray(sparse.eye_array(3, format="csr"))
     assert lib.is_list_like(obj)
-    assert extract_array(obj, extract_numpy=True, extract_range=True) is obj  # type: ignore[call-arg]
+    assert extract_array(obj, extract_numpy=True, extract_range=True) is obj  # pyright: ignore[reportCallIssue]
     assert sanitize_array(obj, index=[*"ABC"]) is obj
 
     a = pd.array([3, 4], dtype=LinearVariable())
-    assert all(a.indptr == [0] * 4 + [1, 2])  # type: ignore[attr-defined]
+    assert all(a.indptr == [0] * 4 + [1, 2])  # pyright: ignore[reportAttributeAccessIssue]
     assert (a != a.astype(float)).nnz == 0
 
     s: pd.Series = pd.Series(obj, index=[*"ABC"])
@@ -48,7 +48,7 @@ def test_melt() -> None:
         index=[*"abc"],
     )
     narrow = wide.melt(ignore_index=False)
-    assert (sparse.eye_array(6) != narrow["value"].array).nnz == 0  # type: ignore[attr-defined]
+    assert (sparse.eye_array(6) != narrow["value"].array).nnz == 0  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_unstack() -> None:

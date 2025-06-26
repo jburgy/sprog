@@ -29,7 +29,7 @@ class CscBuilder:
     def insert(self, row: int, col: int, value: float) -> None:
         """Insert `value` at `(row, col)`."""
         while col >= len(self.indptr):
-            self.indptr.append(len(self.indices))  # type: ignore[arg-type]
+            self.indptr.append(len(self.indices))  # pyright: ignore[reportArgumentType]
         self.indices.append(row)
         self.data.append(value)
 
@@ -93,14 +93,14 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
                 if not row:
                     continue
                 value = float(line[offset + 10 : offset + 25])  # noqa: E203
-                setter[row](col, -value if row in flip else value)  # type: ignore[misc]
+                setter[row](col, -value if row in flip else value)
         elif section == "RHS":
             for offset in _OFFSETS:
                 row = line[offset : offset + 7].rstrip()  # noqa: E203
                 if not row:
                     continue
                 value = float(line[offset + 10 : offset + 25])  # noqa: E203
-                rhs[row](-value if row in flip else value)  # type: ignore[misc]
+                rhs[row](-value if row in flip else value)
         elif section == "BOUNDS":
             col = columns[line[14:21].rstrip()]
             bounds[line[1:3]][col] = float(line[24:39])
@@ -108,23 +108,23 @@ def solve_mps(lines: Iterable[str]) -> optimize.OptimizeResult:
 
     n_ub = next(count_ub)
     n_eq = next(count_eq)
-    a_ub.indptr.append(len(a_ub.indices))  # type: ignore[arg-type]
-    a_eq.indptr.append(len(a_eq.indices))  # type: ignore[arg-type]
+    a_ub.indptr.append(len(a_ub.indices))  # pyright: ignore[reportArgumentType]
+    a_eq.indptr.append(len(a_eq.indices))  # pyright: ignore[reportArgumentType]
 
     tmp = np.zeros((len(columns), 2))
     tmp[:, 1] = np.nan
     for key, val in bounds.items():
         tmp[list(val), ["LO", "UP"].index(key)] = list(val.values())
 
-    return optimize.linprog(  # type: ignore[call-overload]
+    return optimize.linprog(  # pyright: ignore[reportCallIssue]
         c=_array_from_dict(len(columns), c),
-        A_ub=sparse.csc_array(  # type: ignore[type-var]
-            (a_ub.data, a_ub.indices, a_ub.indptr), shape=(n_ub, len(columns))  # type: ignore[arg-type]
+        A_ub=sparse.csc_array(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            (a_ub.data, a_ub.indices, a_ub.indptr), shape=(n_ub, len(columns))  # pyright: ignore[reportArgumentType]
         ),
         b_ub=_array_from_dict(n_ub, b_ub),
-        A_eq=sparse.csc_array(  # type: ignore[type-var]
-            (a_eq.data, a_eq.indices, a_eq.indptr), shape=(n_eq, len(columns))  # type: ignore[arg-type]
+        A_eq=sparse.csc_array(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            (a_eq.data, a_eq.indices, a_eq.indptr), shape=(n_eq, len(columns))  # pyright: ignore[reportArgumentType]
         ),
         b_eq=_array_from_dict(n_eq, b_eq),
-        bounds=tmp,  # type: ignore[arg-type]
+        bounds=tmp,  # pyright: ignore[reportArgumentType]
     )

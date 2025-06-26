@@ -10,9 +10,9 @@ import pandas as pd
 import pytest
 from scipy import optimize, sparse
 
-from sprog import aggregate as agg  # type: ignore[import-untyped]
+from sprog import aggregate as agg
 from sprog import function as func
-from sprog.extension import LinearVariableArray  # type: ignore[import-untyped]
+from sprog.extension import LinearVariableArray
 from tests import resources
 
 
@@ -21,12 +21,12 @@ def portfolio() -> pd.DataFrame:
     """Use LSEQ as sample portfolio of US equities."""
     columns = {"TICKER": "Symbol", "VALUE (USD)": "MV"}
     rc = files(resources)
-    holdings = pd.read_csv(  # type: ignore[call-overload]
-        rc.joinpath("Harbor_Long-Short_Equity_ETF_holdings_20241022.csv"),  # type: ignore[arg-type]
-        usecols=columns,  # type: ignore[arg-type]
+    holdings = pd.read_csv(
+        rc.joinpath("Harbor_Long-Short_Equity_ETF_holdings_20241022.csv"),  # pyright: ignore[reportArgumentType]
+        usecols=columns,  # pyright: ignore[reportArgumentType]
     ).rename(columns=columns)
-    screener = pd.read_csv(  # type: ignore[call-overload]
-        rc.joinpath("nasdaq_screener_1729696921350.csv"),  # type: ignore[arg-type]
+    screener = pd.read_csv(
+        rc.joinpath("nasdaq_screener_1729696921350.csv"),  # pyright: ignore[reportArgumentType]
         index_col="Symbol",
         usecols=["Symbol", "Sector"],
     )
@@ -81,7 +81,7 @@ def _margin(
         gmv * base_rate
         + np.full((1, 1), skew_penalty_rate) @ long_excess
         + np.full((1, 1), skew_penalty_rate) @ short_excess
-        + np.full((1, len(sector_excess)), sector_penalty_rate) @ sector_excess.array  # type: ignore[union-attr]
+        + np.full((1, len(sector_excess)), sector_penalty_rate) @ sector_excess.array  # pyright: ignore[reportAttributeAccessIssue]
     )
 
 
@@ -117,17 +117,17 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
     portfolio["broker_2"] = sign @ LinearVariableArray(m)
 
     c = sum(
-        _margin(portfolio, broker, **parameters)  # type: ignore[arg-type, misc]
+        _margin(portfolio, broker, **parameters)  # pyright: ignore[reportArgumentType, reportCallIssue]
         for broker, parameters in broker_parameters.items()
     )
     slacks = LinearVariableArray._concat_same_type(LinearVariableArray.slacks)
-    solution = optimize.linprog(  # type: ignore[call-overload]
+    solution = optimize.linprog(  # pyright: ignore[reportCallIssue]
         c=c,
-        A_ub=sparse.csr_array(slacks),  # type: ignore[arg-type]
+        A_ub=sparse.csr_array(slacks),  # pyright: ignore[reportArgumentType]
         b_ub=np.zeros(len(slacks)),
-        A_eq=sparse.csr_array(  # type: ignore[call-overload]
-            (portfolio["broker_1"] + portfolio["broker_2"]).array,  # type: ignore[arg-type]
-            shape=(m, c.shape[1]),  # type: ignore[attr-defined]
+        A_eq=sparse.csr_array(  # pyright: ignore[reportArgumentType, reportCallIssue]
+            (portfolio["broker_1"] + portfolio["broker_2"]).array,  # pyright: ignore[reportArgumentType]
+            shape=(m, c.shape[1]),  # pyright: ignore[reportAttributeAccessIssue]
         ),
         b_eq=portfolio["MV"],
     )
@@ -141,23 +141,23 @@ def test_allocation(portfolio: pd.DataFrame, broker_parameters: pd.DataFrame) ->
     portfolio["broker_2"] = portfolio["broker_2"].array @ solution.x
     margin_checks = pd.DataFrame.from_dict(
         {
-            broker: _check_margin(portfolio, broker, **parameters)  # type: ignore[arg-type]
+            broker: _check_margin(portfolio, broker, **parameters)  # pyright: ignore[reportArgumentType]
             for broker, parameters in broker_parameters.items()
         }
     )
     n = m + m
-    assert np.isclose(fun[0, :m].sum(), margin_checks.loc["base", "broker_1"])  # type: ignore[call-overload, arg-type]
-    assert np.isclose(fun[0, m:n].sum(), margin_checks.loc["base", "broker_2"])  # type: ignore[call-overload, arg-type]
-    assert np.isclose(fun[0, n], margin_checks.loc["long", "broker_1"])  # type: ignore[call-overload, arg-type]
-    assert np.isclose(fun[0, n + 1], margin_checks.loc["short", "broker_1"])  # type: ignore[call-overload, arg-type]
+    assert np.isclose(fun[0, :m].sum(), margin_checks.loc["base", "broker_1"])  # pyright: ignore[reportArgumentType, reportCallIssue]
+    assert np.isclose(fun[0, m:n].sum(), margin_checks.loc["base", "broker_2"])  # pyright: ignore[reportArgumentType, reportCallIssue]
+    assert np.isclose(fun[0, n], margin_checks.loc["long", "broker_1"])  # pyright: ignore[reportArgumentType, reportCallIssue]
+    assert np.isclose(fun[0, n + 1], margin_checks.loc["short", "broker_1"])  # pyright: ignore[reportArgumentType, reportCallIssue]
     assert np.allclose(fun[0, n + 1 : n + 10], 0.0)
-    assert np.isclose(  # type: ignore[call-overload]
-        fun[0, n + 10 : n + 19].sum(), margin_checks.loc["sector", "broker_1"]  # type: ignore[arg-type]
+    assert np.isclose(  # pyright: ignore[reportCallIssue]
+        fun[0, n + 10 : n + 19].sum(), margin_checks.loc["sector", "broker_1"]  # pyright: ignore[reportArgumentType]
     )
-    assert np.isclose(fun[0, n + 20], margin_checks.loc["long", "broker_2"])  # type: ignore[call-overload, arg-type]
-    assert np.isclose(fun[0, n + 21], margin_checks.loc["short", "broker_2"])  # type: ignore[call-overload, arg-type]
+    assert np.isclose(fun[0, n + 20], margin_checks.loc["long", "broker_2"])  # pyright: ignore[reportArgumentType, reportCallIssue]
+    assert np.isclose(fun[0, n + 21], margin_checks.loc["short", "broker_2"])  # pyright: ignore[reportArgumentType, reportCallIssue]
     assert np.allclose(fun[0, n + 21 : n + 30], 0.0)
-    assert np.isclose(fun[0, n + 30 :].sum(), margin_checks.loc["sector", "broker_2"])  # type: ignore[call-overload, arg-type]
+    assert np.isclose(fun[0, n + 30 :].sum(), margin_checks.loc["sector", "broker_2"])  # pyright: ignore[reportArgumentType, reportCallIssue]
 
 
 if __name__ == "__main__":

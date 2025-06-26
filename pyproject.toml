@@ -43,8 +43,8 @@ packages = ["src/sprog"]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.16.1",
     "pandas-stubs>=2.2.3.250527",
+    "pyright>=1.1.402",
     "pytest-cov>=5.0.0",
     "pytest-github-report>=0.0.1",
     "pytest-memray>=1.7.0",

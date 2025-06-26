@@ -17,7 +17,7 @@ def sum(groups: SeriesGroupBy) -> pd.Series:  # noqa: A001
     row = cast("Sequence[Integral]", groups.ngroup().to_numpy())
     return groups._wrap_applied_output(  # noqa: SLF001
         data=groups.obj,
-        values=scatter(row, grouping=True) @ groups.obj.array,  # type: ignore[operator]
+        values=scatter(row, grouping=True) @ groups.obj.array,  # pyright: ignore[reportOperatorIssue]
         not_indexed_same=True,
         is_transform=False,
     )

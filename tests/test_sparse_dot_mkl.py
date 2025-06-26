@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
-from ctypes.util import _is_elf  # type: ignore[attr-defined]
+from ctypes.util import _is_elf  # pyright: ignore[reportAttributeAccessIssue]
 from pathlib import Path
 from typing import cast
 

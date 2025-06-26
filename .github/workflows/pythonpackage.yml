@@ -22,7 +22,7 @@ jobs:
     - uses: astral-sh/ruff-action@v3
       with:
         version: "latest"
-    - run: uv run mypy .
+    - run: uv run pyright
     - run: uv run pytest
       env:
         pytest_github_report: true

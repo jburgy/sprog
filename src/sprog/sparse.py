@@ -44,7 +44,7 @@ def scatter(
     assert m >= cast("int", max(indices)) + 1
     assert n >= k
     assert grouping or m >= n
-    return sparse.csr_array((np.ones(shape=k), (indices, range(k))), shape=(m, n))
+    return sparse.csr_array((np.ones(shape=k), (indices, range(k))), shape=(m, n))  # pyright: ignore[reportArgumentType, reportCallIssue]
 
 
 def gather(
@@ -76,7 +76,7 @@ def gather(
     if n < 0:
         n = cast("int", max(indices)) + 1
     assert n >= cast("int", max(indices)) + 1
-    return sparse.csr_array((np.ones(shape=k), (range(k), indices)), shape=(m, n))
+    return sparse.csr_array((np.ones(shape=k), (range(k), indices)), shape=(m, n))  # pyright: ignore[reportArgumentType, reportCallIssue]
 
 
 def _increments(s: Sequence[Integral]) -> Iterable[Integral]:

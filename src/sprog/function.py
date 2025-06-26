@@ -20,7 +20,7 @@ def pos(s: pd.Series | LinearVariableArray) -> pd.Series | LinearVariableArray:
     assert isinstance(s, LinearVariableArray) or isinstance(s.dtype, LinearVariable)
 
     excess = LinearVariableArray(len(s))
-    excess.slacks.append((s.array if isinstance(s, pd.Series) else s) - excess)  # type: ignore[operator]
+    excess.slacks.append((s.array if isinstance(s, pd.Series) else s) - excess)  # pyright: ignore[reportOperatorIssue]
     return (
         pd.Series(
             excess,
